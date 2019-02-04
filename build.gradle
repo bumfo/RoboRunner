@@ -1,3 +1,5 @@
+import java.util.stream.Collectors
+
 plugins {
     id 'java'
 }
@@ -25,34 +27,43 @@ sourceSets {
     }
 }
 
+def distDir = "$buildDir/dist"
+
 task cleanDist(dependsOn: build, type: Delete) {
-    delete["$buildDir/dist"]
+    delete[distDir]
 }
 
-task copyLibs(dependsOn: cleanDist, type: Copy) {
+task copyDependencies(dependsOn: cleanDist, type: Copy) {
+    from(configurations.runtime) {
+        include '*guava*'
+    }
+    into "$distDir/lib"
+}
+
+task copyLibs(dependsOn: copyDependencies, type: Copy) {
     from "$buildDir/libs"
-    into "$buildDir/dist/lib"
+    into "$distDir/lib"
 }
 
-task copyDependencies(type: Copy) {
-    from configurations.runtime
-    into "$buildDir/dist/lib"
-}
 
-task generateScripts(dependsOn: copyDependencies) {
+task generateScripts(dependsOn: copyLibs) {
+
     String genOutputDir = file("$buildDir/generated-scripts")
 
     File outputFile = file("$genOutputDir/rr.sh")
     outputs.file(outputFile)
 
     doLast {
+        def libs = copyLibs.outputs.getFiles().singleFile
+        def path = fileTree(dir: libs).files.stream().map({ x -> 'lib' + x.toString().substring(libs.toString().length()) }).collect(Collectors.joining(':'))
+
         outputFile.text = "#!/bin/sh\n" +
-                "java -cp lib/${jar.archivePath.getName()}:lib/guava-23.5-jre.jar:robocodes/r1/libs/robocode.jar robowiki.runner.RoboRunner \$*"
+                "java -cp ${path}:robocodes/r1/libs/robocode.jar robowiki.runner.RoboRunner \$*"
     }
 }
 
 task deploy(dependsOn: copyLibs, type: Copy) {
     from 'scripts'
     from generateScripts.getOutputs()
-    into "$buildDir/dist"
+    into "$distDir"
 }

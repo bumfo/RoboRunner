@@ -1,16 +1,14 @@
 package robowiki.runner;
 
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.io.Files;
+import robowiki.runner.RobotScore.ScoringStyle;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.List;
-
-import robowiki.runner.RobotScore.ScoringStyle;
-
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.io.Files;
 
 public final class ChallengeConfig {
   public static final String DEFAULT_GROUP = "";
@@ -24,8 +22,8 @@ public final class ChallengeConfig {
   public final List<BotList> allReferenceBots;
 
   public ChallengeConfig(String name, int rounds, ScoringStyle scoringStyle,
-      int battleFieldWidth, int battleFieldHeight,
-      List<BotListGroup> referenceBotGroups) {
+                         int battleFieldWidth, int battleFieldHeight,
+                         List<BotListGroup> referenceBotGroups) {
     this.name = name;
     this.rounds = rounds;
     this.scoringStyle = scoringStyle;
@@ -50,12 +48,12 @@ public final class ChallengeConfig {
   public static ChallengeConfig load(String challengeFilePath) {
     try {
       List<String> fileLines = Files.readLines(
-          new File(challengeFilePath), Charset.defaultCharset());
+        new File(challengeFilePath), Charset.defaultCharset());
       String name = fileLines.get(0);
       ScoringStyle scoringStyle =
-          ScoringStyle.parseStyle(fileLines.get(1).trim());
+        ScoringStyle.parseStyle(fileLines.get(1).trim());
       int rounds = Integer.parseInt(
-          fileLines.get(2).toLowerCase().replaceAll("rounds", "").trim());
+        fileLines.get(2).toLowerCase().replaceAll("rounds", "").trim());
       List<BotListGroup> botGroups = Lists.newArrayList();
       List<BotList> groupBots = Lists.newArrayList();
       String groupName = DEFAULT_GROUP;
@@ -86,7 +84,7 @@ public final class ChallengeConfig {
                 return false;
               } else {
                 System.out.println("WARNING: " + botName + " doesn't look "
-                    + "like a bot name, ignoring.");
+                  + "like a bot name, ignoring.");
                 return true;
               }
             });
@@ -98,7 +96,7 @@ public final class ChallengeConfig {
 
       if (scoringStyle == ScoringStyle.MOVEMENT_CHALLENGE && maxBots > 2) {
         throw new RuntimeException("Movement Challenge scoring doesn't work "
-            + "for battles with more than 2 bots.");
+          + "for battles with more than 2 bots.");
       }
 
       if (!groupBots.isEmpty()) {
@@ -106,8 +104,8 @@ public final class ChallengeConfig {
       }
 
       return new ChallengeConfig(name, rounds, scoringStyle,
-          (width == null ? 800 : width), (height == null ? 600 : height),
-          botGroups);
+        (width == null ? 800 : width), (height == null ? 600 : height),
+        botGroups);
     } catch (IOException e) {
       e.printStackTrace();
     }

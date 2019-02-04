@@ -1,5 +1,10 @@
 package robowiki.runner;
 
+import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Queues;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -14,11 +19,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Queues;
-
 public final class BattleRunner {
   private static final Joiner COMMA_JOINER = Joiner.on(",");
 
@@ -30,7 +30,7 @@ public final class BattleRunner {
   private final int _battleFieldHeight;
 
   public BattleRunner(Set<String> robocodeEnginePaths, String jvmArgs,
-      int numRounds, int battleFieldWidth, int battleFieldHeight) {
+                      int numRounds, int battleFieldWidth, int battleFieldHeight) {
     _numRounds = numRounds;
     _battleFieldWidth = battleFieldWidth;
     _battleFieldHeight = battleFieldHeight;
@@ -49,17 +49,17 @@ public final class BattleRunner {
       command.add("java");
       command.addAll(Lists.newArrayList(jvmArgs.trim().split(" +")));
       command.addAll(Lists.newArrayList("-cp",
-          System.getProperty("java.class.path"),
-          "robowiki.runner.BattleProcess", "-rounds", "" + _numRounds,
-          "-width", "" + _battleFieldWidth, "-height", "" + _battleFieldHeight,
-          "-path", enginePath));
+        System.getProperty("java.class.path"),
+        "robowiki.runner.BattleProcess", "-rounds", "" + _numRounds,
+        "-width", "" + _battleFieldWidth, "-height", "" + _battleFieldHeight,
+        "-path", enginePath));
 
       System.out.print("Initializing engine: " + enginePath + "... ");
       ProcessBuilder builder = new ProcessBuilder(command);
       builder.redirectErrorStream(true);
       Process battleProcess = builder.start();
       BufferedReader reader = new BufferedReader(
-          new InputStreamReader(battleProcess.getInputStream()));
+        new InputStreamReader(battleProcess.getInputStream()));
       String processOutput;
       do {
         processOutput = reader.readLine();
@@ -99,20 +99,20 @@ public final class BattleRunner {
   }
 
   private Callable<String> newBattleCallable(
-      BotList botList, BattleResultHandler handler) {
+    BotList botList, BattleResultHandler handler) {
     return new BattleCallable(botList, handler);
   }
 
   private Callable<String> newBattleCallable(
-      BattleSelector selector, BattleResultHandler handler) {
+    BattleSelector selector, BattleResultHandler handler) {
     return new BattleCallable(selector, handler);
   }
 
   private List<RobotScore> getRobotScoreList(String battleResults) {
     List<RobotScore> robotScores = Lists.newArrayList();
     String[] botScores =
-        battleResults.replaceFirst(BattleProcess.RESULT_SIGNAL, "")
-            .replaceAll("\n", "").split(BattleProcess.BOT_DELIMITER);
+      battleResults.replaceFirst(BattleProcess.RESULT_SIGNAL, "")
+        .replaceAll("\n", "").split(BattleProcess.BOT_DELIMITER);
     for (String scoreString : botScores) {
       String[] scoreFields = scoreString.split(BattleProcess.SCORE_DELIMITER);
       String botName = scoreFields[0];
@@ -121,7 +121,7 @@ public final class BattleRunner {
       int survivalScore = Integer.parseInt(scoreFields[3]);
       double bulletDamage = Double.parseDouble(scoreFields[4]);
       RobotScore robotScore =
-          new RobotScore(botName, score, firsts, survivalScore, bulletDamage);
+        new RobotScore(botName, score, firsts, survivalScore, bulletDamage);
       robotScores.add(robotScore);
     }
     return ImmutableList.copyOf(robotScores);
@@ -161,7 +161,7 @@ public final class BattleRunner {
     }
 
     public BattleCallable(
-        BattleSelector selector, BattleResultHandler listener) {
+      BattleSelector selector, BattleResultHandler listener) {
       _selector = selector;
       _listener = listener;
     }
@@ -171,9 +171,9 @@ public final class BattleRunner {
       final long startTime = System.nanoTime();
       Process battleProcess = _processQueue.poll();
       BufferedWriter writer = new BufferedWriter(
-          new OutputStreamWriter(battleProcess.getOutputStream()));
+        new OutputStreamWriter(battleProcess.getOutputStream()));
       BufferedReader reader = new BufferedReader(
-          new InputStreamReader(battleProcess.getInputStream()));
+        new InputStreamReader(battleProcess.getInputStream()));
       BotList botList;
       if (_selector == null) {
         botList = _botList;
@@ -190,7 +190,7 @@ public final class BattleRunner {
       final String result = input;
       _processQueue.add(battleProcess);
       _callbackPool.submit(() -> _listener.processResults(
-          getRobotScoreList(result), System.nanoTime() - startTime)).get();
+        getRobotScoreList(result), System.nanoTime() - startTime)).get();
       return result;
     }
   }

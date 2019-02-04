@@ -1,13 +1,12 @@
 package robowiki.runner;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Multimap;
 import robocode.control.RobotResults;
 import robocode.control.events.BattleAdaptor;
 import robocode.control.events.BattleCompletedEvent;
 import robocode.control.events.BattleErrorEvent;
-
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Multimap;
 
 public final class BattleListener extends BattleAdaptor {
   private final Multimap<String, RobotResults> _botResults;
@@ -18,7 +17,7 @@ public final class BattleListener extends BattleAdaptor {
 
   public final void onBattleCompleted(BattleCompletedEvent completedEvent) {
     RobotResults[] robotResultsArray =
-        RobotResults.convertResults(completedEvent.getIndexedResults());
+      RobotResults.convertResults(completedEvent.getIndexedResults());
     for (RobotResults robotResults : robotResultsArray) {
       _botResults.put(robotResults.getTeamLeaderName(), robotResults);
     }

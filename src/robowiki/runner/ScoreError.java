@@ -28,14 +28,14 @@ public final class ScoreError {
 
   public final double getAccuracyGainRate() {
     return (getStandardError(numBattles) - getStandardError(numBattles + 1))
-        / avgTime;
+      / avgTime;
   }
 
   public final double generateRandomAverageScore() {
     double scoreTotal = 0;
     for (int x = 0; x < numBattles; x++) {
       scoreTotal += Math.max(0, Math.min(100, average
-          + (RANDOM.nextGaussian() * standardDeviation)));
+        + (RANDOM.nextGaussian() * standardDeviation)));
     }
     return scoreTotal / numBattles;
   }

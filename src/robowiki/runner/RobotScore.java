@@ -33,19 +33,19 @@ public final class RobotScore {
   public final int numBattles;
 
   public RobotScore(String botName, double score, double survivalRounds,
-      double survivalScore, double bulletDamage) {
+                    double survivalScore, double bulletDamage) {
     this(botName, score, survivalRounds, survivalScore, bulletDamage, 0, 1);
   }
 
   public RobotScore(String botName, double score, double survivalRounds,
-      double survivalScore, double bulletDamage, double energyConserved) {
+                    double survivalScore, double bulletDamage, double energyConserved) {
     this(botName, score, survivalRounds, survivalScore, bulletDamage,
-        energyConserved, 1);
+      energyConserved, 1);
   }
 
   public RobotScore(String botName, double score, double survivalRounds,
-      double survivalScore, double bulletDamage, double energyConserved,
-      int numBattles) {
+                    double survivalScore, double bulletDamage, double energyConserved,
+                    int numBattles) {
     this.botName = botName;
     this.score = score;
     this.survivalRounds = survivalRounds;
@@ -57,9 +57,9 @@ public final class RobotScore {
 
   /**
    * Calculates this score relative to the given enemy score.
-   * 
+   *
    * @param enemyScore score data for the enemy robot
-   * @param numRounds number of rounds in the battle
+   * @param numRounds  number of rounds in the battle
    * @return the {@code RobotScore} relative to the given enemy robot score
    */
   public final RobotScore getScoreRelativeTo(
@@ -69,20 +69,20 @@ public final class RobotScore {
 
   /**
    * Calculates this score relative to the given enemy scores.
-   * 
+   *
    * @param enemyScores score data for the other robots in the battle
-   * @param numRounds number of rounds in the battle
+   * @param numRounds   number of rounds in the battle
    * @return the {@code RobotScore} relative to the given enemy robot scores
    */
   public final RobotScore getScoreRelativeTo(
     List<RobotScore> enemyScores, int numRounds) {
     return new RobotScore(botName,
-        getAverageScore(RobotScore.NORMAL_SCORER, enemyScores),
-        getAverageScore(RobotScore.SURVIVAL_FIRSTS_SCORER, enemyScores),
-        getAverageScore(RobotScore.SURVIVAL_SCORER, enemyScores),
-        bulletDamage / numRounds,
-        getAverageEnergyConserved(enemyScores, numRounds),
-        numBattles);
+      getAverageScore(RobotScore.NORMAL_SCORER, enemyScores),
+      getAverageScore(RobotScore.SURVIVAL_FIRSTS_SCORER, enemyScores),
+      getAverageScore(RobotScore.SURVIVAL_SCORER, enemyScores),
+      bulletDamage / numRounds,
+      getAverageEnergyConserved(enemyScores, numRounds),
+      numBattles);
   }
 
   private double getAverageScore(
@@ -92,14 +92,14 @@ public final class RobotScore {
     int numScores = 0;
     for (RobotScore robotScore : enemyScores) {
       totalScore += 100 * (challengerScore
-          / (challengerScore + scorer.apply(robotScore)));
+        / (challengerScore + scorer.apply(robotScore)));
       numScores++;
     }
     return totalScore / numScores;
   }
 
   private double getAverageEnergyConserved(
-      List<RobotScore> enemyScores, int numRounds) {
+    List<RobotScore> enemyScores, int numRounds) {
     if (enemyScores.size() == 1) {
       return 100 - (enemyScores.get(0).bulletDamage / numRounds);
     }
@@ -120,22 +120,22 @@ public final class RobotScore {
 
     int addedBattles = score1.numBattles + score2.numBattles;
     double score = ((score1.score * score1.numBattles)
-        + (score2.score * score2.numBattles))
-            / addedBattles;
+      + (score2.score * score2.numBattles))
+      / addedBattles;
     double rounds = ((score1.survivalRounds * score1.numBattles)
-        + (score2.survivalRounds * score2.numBattles))
-            / addedBattles;
+      + (score2.survivalRounds * score2.numBattles))
+      / addedBattles;
     double survival = ((score1.survivalScore * score1.numBattles)
-        + (score2.survivalScore * score2.numBattles))
-            / addedBattles;
+      + (score2.survivalScore * score2.numBattles))
+      / addedBattles;
     double damage = ((score1.bulletDamage * score1.numBattles)
-        + (score2.bulletDamage * score2.numBattles))
-            / addedBattles;
+      + (score2.bulletDamage * score2.numBattles))
+      / addedBattles;
     double energy = ((score1.energyConserved * score1.numBattles)
-        + (score2.energyConserved * score2.numBattles))
-            / addedBattles;
+      + (score2.energyConserved * score2.numBattles))
+      / addedBattles;
     return new RobotScore(
-        score1.botName, score, rounds, survival, damage, energy, addedBattles);
+      score1.botName, score, rounds, survival, damage, energy, addedBattles);
   }
 
   public enum ScoringStyle {
@@ -166,11 +166,12 @@ public final class RobotScore {
       } else if (styleString.contains("SURVIVAL_SCORE")) {
         return SURVIVAL_SCORE;
       } else if (styleString.contains("MOVEMENT_CHALLENGE")
-                 || styleString.contains("ENERGY_CONSERVED")) {
+        || styleString.contains("ENERGY_CONSERVED"))
+      {
         return MOVEMENT_CHALLENGE;
       } else {
         throw new IllegalArgumentException(
-            "Unrecognized scoring style: " + styleString);
+          "Unrecognized scoring style: " + styleString);
       }
     }
 

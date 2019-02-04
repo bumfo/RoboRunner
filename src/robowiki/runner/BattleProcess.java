@@ -1,7 +1,13 @@
 package robowiki.runner;
 
-import static robowiki.runner.RunnerUtil.getCombinedArgs;
-import static robowiki.runner.RunnerUtil.parseStringArgument;
+import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
+import robocode.control.BattleSpecification;
+import robocode.control.BattlefieldSpecification;
+import robocode.control.RobocodeEngine;
+import robocode.control.RobotResults;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -10,15 +16,8 @@ import java.io.InputStreamReader;
 import java.util.Map;
 import java.util.Set;
 
-import robocode.control.BattleSpecification;
-import robocode.control.BattlefieldSpecification;
-import robocode.control.RobocodeEngine;
-import robocode.control.RobotResults;
-
-import com.google.common.base.Joiner;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
+import static robowiki.runner.RunnerUtil.getCombinedArgs;
+import static robowiki.runner.RunnerUtil.parseStringArgument;
 
 public final class BattleProcess {
   public static final String READY_SIGNAL = "BattleProcess ready";
@@ -37,19 +36,19 @@ public final class BattleProcess {
   public static void main(String[] args) {
     args = getCombinedArgs(args);
     String robocodePath = parseStringArgument("path", args,
-        "Pass a path to Robocode with -path");
+      "Pass a path to Robocode with -path");
     int numRounds = Integer.parseInt(parseStringArgument("rounds", args,
-        "Pass number of rounds width with -rounds"));
+      "Pass number of rounds width with -rounds"));
     int width = Integer.parseInt(parseStringArgument("width", args,
-        "Pass battlefield width with -width"));
+      "Pass battlefield width with -width"));
     int height = Integer.parseInt(parseStringArgument("height", args,
-        "Pass battlefield height with -height"));
+      "Pass battlefield height with -height"));
 
     BattleProcess process =
-        new BattleProcess(robocodePath, numRounds, width, height);
+      new BattleProcess(robocodePath, numRounds, width, height);
     System.out.println(READY_SIGNAL);
     BufferedReader stdin =
-        new BufferedReader(new InputStreamReader(System.in));
+      new BufferedReader(new InputStreamReader(System.in));
     while (true) {
       try {
         String line = stdin.readLine();
@@ -67,10 +66,10 @@ public final class BattleProcess {
   }
 
   public BattleProcess(String robocodePath, int numRounds,
-      int battleFieldWidth, int battleFieldHeight) {
+                       int battleFieldWidth, int battleFieldHeight) {
     _numRounds = numRounds;
     _battlefield =
-        new BattlefieldSpecification(battleFieldWidth, battleFieldHeight);
+      new BattlefieldSpecification(battleFieldWidth, battleFieldHeight);
     _engine = new RobocodeEngine(new File(robocodePath));
     _listener = new BattleListener();
     _engine.addBattleListener(_listener);
@@ -79,8 +78,8 @@ public final class BattleProcess {
 
   public final String runBattle(BotList botList) {
     BattleSpecification battleSpec = new BattleSpecification(
-        _numRounds, _battlefield, 
-    _engine.getLocalRepository(COMMA_JOINER.join(botList.getBotNames())));
+      _numRounds, _battlefield,
+      _engine.getLocalRepository(COMMA_JOINER.join(botList.getBotNames())));
     _engine.runBattle(battleSpec, true);
     Multimap<String, RobotResults> resultsMap = _listener.getRobotResultsMap();
     _listener.clear();
@@ -92,10 +91,10 @@ public final class BattleProcess {
     for (Map.Entry<String, RobotResults> resultsEntry : resultsMap.entries()) {
       RobotResults results = resultsEntry.getValue();
       resultStrings.add(resultsEntry.getKey() + SCORE_DELIMITER
-          + results.getScore() + SCORE_DELIMITER
-          + results.getFirsts() + SCORE_DELIMITER
-          + results.getSurvival() + SCORE_DELIMITER
-          + results.getBulletDamage());
+        + results.getScore() + SCORE_DELIMITER
+        + results.getFirsts() + SCORE_DELIMITER
+        + results.getSurvival() + SCORE_DELIMITER
+        + results.getBulletDamage());
     }
     return COLON_JOINER.join(resultStrings);
   }

@@ -1,8 +1,8 @@
 package robowiki.runner;
 
-import java.util.List;
-
 import com.google.common.collect.Lists;
+
+import java.util.List;
 
 public final class RunnerUtil {
   public static String[] getCombinedArgs(String[] args) {
@@ -30,10 +30,10 @@ public final class RunnerUtil {
   }
 
   public static String parseStringArgument(
-      String flagName, String[] args, String missingError) {
+    String flagName, String[] args, String missingError) {
     for (int x = 0; x < args.length - 1; x++) {
       if (args[x].equals("-" + flagName)) {
-        return args[x+1];
+        return args[x + 1];
       }
     }
     if (missingError != null) {

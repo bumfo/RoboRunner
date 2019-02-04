@@ -1,10 +1,19 @@
 package robowiki.runner;
 
-import static robowiki.runner.RunnerUtil.getCombinedArgs;
-import static robowiki.runner.RunnerUtil.parseBooleanArgument;
-import static robowiki.runner.RunnerUtil.parseStringArgument;
-import static robowiki.runner.RunnerUtil.round;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.google.common.io.Files;
+import robowiki.runner.BattleRunner.BattleResultHandler;
+import robowiki.runner.BattleRunner.BattleSelector;
+import robowiki.runner.ChallengeConfig.BotListGroup;
+import robowiki.runner.RobotScore.ScoringStyle;
+import robowiki.runner.ScoreLog.BattleScore;
 
+import javax.xml.stream.XMLStreamException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -18,22 +27,10 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import javax.xml.stream.XMLStreamException;
-
-import robowiki.runner.BattleRunner.BattleResultHandler;
-import robowiki.runner.BattleRunner.BattleSelector;
-import robowiki.runner.ChallengeConfig.BotListGroup;
-import robowiki.runner.RobotScore.ScoringStyle;
-import robowiki.runner.ScoreLog.BattleScore;
-
-import com.google.common.base.Function;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
-import com.google.common.io.Files;
+import static robowiki.runner.RunnerUtil.getCombinedArgs;
+import static robowiki.runner.RunnerUtil.parseBooleanArgument;
+import static robowiki.runner.RunnerUtil.parseStringArgument;
+import static robowiki.runner.RunnerUtil.round;
 
 public final class RoboRunner {
   private static final String PROPERTIES_FILENAME = "roborunner.properties";
@@ -54,14 +51,14 @@ public final class RoboRunner {
   public static void main(String[] args) {
     args = getCombinedArgs(args);
     String challengerBot = parseStringArgument("bot", args,
-        "ERROR: Pass a bot with -bot, eg: -bot voidious.Dookious 1.573c");
+      "ERROR: Pass a bot with -bot, eg: -bot voidious.Dookious 1.573c");
     String challengeFile = parseStringArgument("c", args,
-        "ERROR: Pass a challenge file with -c, eg: -c challenges" + SLASH
+      "ERROR: Pass a challenge file with -c, eg: -c challenges" + SLASH
         + "testbed.rrc");
     int seasons = -1;
     try {
       seasons = Integer.parseInt(parseStringArgument("seasons", args,
-          "ERROR: Pass number of seasons with -seasons, eg: -seasons 10"));
+        "ERROR: Pass number of seasons with -seasons, eg: -seasons 10"));
     } catch (NumberFormatException nfe) {
       // semi-expected
     }
@@ -82,7 +79,7 @@ public final class RoboRunner {
     }
 
     RoboRunner runner = new RoboRunner(challengerBot, challengeFile, seasons,
-        threads, forceWikiOutput, smartBattles);
+      threads, forceWikiOutput, smartBattles);
     if (runner.isMissingBots()) {
       System.out.println("Aborted due to missing bots.");
       System.out.println();
@@ -96,7 +93,7 @@ public final class RoboRunner {
     PrintStream out = System.out;
     out.println();
     out.println("Usage: rr.sh -bot package.BotName 1.2.3 "
-        + "-c challenge.rrc -seasons 25");
+      + "-c challenge.rrc -seasons 25");
     out.println();
     out.println("Runs the challenger bot (-bot) against the challenge");
     out.println("specified in the .rrc file (-c), iterating over the");
@@ -107,13 +104,13 @@ public final class RoboRunner {
     out.println("By default, one thread is used for each install. JARs");
     out.println("missing from the robots" + SLASH + " directories will be");
     out.println("copied over from ." + SLASH + "bots" + SLASH + ", if"
-        + "present.");
+      + "present.");
     out.println();
     out.println("Format of the .rrc file is:");
     out.println("------");
     out.println("<Challenge name>");
     out.println("{PERCENT_SCORE|SURVIVAL_FIRSTS|SURVIVAL_SCORE|BULLET_DAMAGE|"
-        + "MOVEMENT_CHALLENGE}");
+      + "MOVEMENT_CHALLENGE}");
     out.println("<Number of rounds>");
     out.println("<Battlefield width> (optional)");
     out.println("<Battlefield height> (optional)");
@@ -138,15 +135,15 @@ public final class RoboRunner {
     out.println("  -t <threads> -- force number of Robocode processes used");
     out.println("  -wiki        -- force wiki formatted score output");
     out.println("  -smart       -- smart battle selection to get accurate "
-        + "overall score");
+      + "overall score");
     out.println("                  as quickly as possible");
     out.println();
     out.println("Things you can configure in roborunner.properties:");
     out.println("  robocodePaths=<comma delimited list of Robocode installs>");
     out.println("  jvmArgs=<space delimited list of JVM args to battle "
-    		+ "processes>");
+      + "processes>");
     out.println("  botsDirs=<comma delimited list of dirs to look for bot "
-        + "JARs>");
+      + "JARs>");
     out.println();
     out.println("Guava library should be placed in the lib dir, and rr.sh");
     out.println("must include it in the classpath. Available from:");
@@ -157,30 +154,30 @@ public final class RoboRunner {
   }
 
   public RoboRunner(String challengerBot, String challengeFilePath,
-      int seasons, int threads, boolean forceWikiOutput, boolean smartBattles) {
+                    int seasons, int threads, boolean forceWikiOutput, boolean smartBattles) {
     _config = loadConfig(Preconditions.checkNotNull(challengerBot),
-                         Preconditions.checkNotNull(challengeFilePath),
-                         seasons, threads, forceWikiOutput, smartBattles);
+      Preconditions.checkNotNull(challengeFilePath),
+      seasons, threads, forceWikiOutput, smartBattles);
     if (seasons > 0) {
       _missingBots = false;
       _runningBotLists = Lists.newArrayList();
       copyBots(_config.botsDirs);
       if (!isMissingBots()) {
         _battleRunner = new BattleRunner(_config.robocodePaths,
-            _config.jvmArgs, _config.challenge.rounds,
-            _config.challenge.battleFieldWidth,
-            _config.challenge.battleFieldHeight);
+          _config.jvmArgs, _config.challenge.rounds,
+          _config.challenge.battleFieldWidth,
+          _config.challenge.battleFieldHeight);
       }
     }
   }
 
   private RunnerConfig loadConfig(String challengerBot,
-      String challengeFilePath, int seasons, int threads,
-      boolean forceWikiOutput, boolean smartBattles) {
+                                  String challengeFilePath, int seasons, int threads,
+                                  boolean forceWikiOutput, boolean smartBattles) {
     Properties runnerProperties = loadRoboRunnerProperties();
     Iterable<String> pathsIterator = Iterables.transform(
-        Lists.newArrayList(runnerProperties.getProperty(ROBOCODE_PATHS_PROPERTY)
-            .replaceAll(SLASH + "+", SLASH).split(" *, *")),
+      Lists.newArrayList(runnerProperties.getProperty(ROBOCODE_PATHS_PROPERTY)
+        .replaceAll(SLASH + "+", SLASH).split(" *, *")),
       input -> input.replaceAll(SLASH + "$", ""));
 
     Set<String> robocodePaths = Sets.newHashSet();
@@ -194,10 +191,10 @@ public final class RoboRunner {
 
     String jvmArgs = runnerProperties.getProperty(JVM_ARGS_PROPERTY);
     List<String> botsDirs = Lists.newArrayList(
-        runnerProperties.getProperty(BOTS_DIRS_PROPERTY).trim().split(" *, *"));
+      runnerProperties.getProperty(BOTS_DIRS_PROPERTY).trim().split(" *, *"));
     ChallengeConfig challenge = ChallengeConfig.load(challengeFilePath);
     return new RunnerConfig(robocodePaths, jvmArgs, botsDirs, challenge,
-        challengerBot, seasons, forceWikiOutput, smartBattles);
+      challengerBot, seasons, forceWikiOutput, smartBattles);
   }
 
   private Properties loadRoboRunnerProperties() {
@@ -206,21 +203,21 @@ public final class RoboRunner {
       runnerProperties.load(new FileInputStream(PROPERTIES_FILENAME));
     } catch (FileNotFoundException e) {
       System.out.println("Couldn't find " + PROPERTIES_FILENAME + ". Run "
-          + "setup.sh to configure your Robocode installs, or manually edit "
-          + PROPERTIES_FILENAME + " to get started.");
+        + "setup.sh to configure your Robocode installs, or manually edit "
+        + PROPERTIES_FILENAME + " to get started.");
       writeDefaultProperties();
     } catch (IOException e) {
       e.printStackTrace();
     }
     if (!runnerProperties.containsKey(JVM_ARGS_PROPERTY)) {
       System.out.println("WARNING: Couldn't find property " + JVM_ARGS_PROPERTY
-          + ", setting to default: " + DEFAULT_JVM_ARGS);
+        + ", setting to default: " + DEFAULT_JVM_ARGS);
       runnerProperties.setProperty(JVM_ARGS_PROPERTY, DEFAULT_JVM_ARGS);
       saveRoboRunnerProperties(runnerProperties);
     }
     if (!runnerProperties.containsKey(BOTS_DIRS_PROPERTY)) {
       System.out.println("WARNING: Couldn't find property " + BOTS_DIRS_PROPERTY
-          + ", setting to default: " + DEFAULT_BOTS_DIRS);
+        + ", setting to default: " + DEFAULT_BOTS_DIRS);
       runnerProperties.setProperty(BOTS_DIRS_PROPERTY, DEFAULT_BOTS_DIRS);
       saveRoboRunnerProperties(runnerProperties);
     }
@@ -230,7 +227,7 @@ public final class RoboRunner {
   private void writeDefaultProperties() {
     Properties defaultProperties = new Properties();
     defaultProperties.setProperty(ROBOCODE_PATHS_PROPERTY,
-        "/home/pez/robocode_1740_1, /home/pez/robocode_1740_2");
+      "/home/pez/robocode_1740_1, /home/pez/robocode_1740_2");
     defaultProperties.setProperty(JVM_ARGS_PROPERTY, DEFAULT_JVM_ARGS);
     defaultProperties.setProperty(BOTS_DIRS_PROPERTY, DEFAULT_BOTS_DIRS);
     saveRoboRunnerProperties(defaultProperties);
@@ -249,7 +246,7 @@ public final class RoboRunner {
     System.out.print("Copying missing bots...");
     int jarsCopied = 0;
     List<BotList> allBots =
-        Lists.newArrayList(new BotList(_config.challengerBot));
+      Lists.newArrayList(new BotList(_config.challengerBot));
     allBots.addAll(_config.challenge.allReferenceBots);
     for (BotList botList : allBots) {
       for (String bot : botList.getBotNames()) {
@@ -306,61 +303,61 @@ public final class RoboRunner {
     final ScoreLog scoreLog = loadScoreLog(challenger, xmlFilePath);
     final ScoringStyle scoringStyle = challenge.scoringStyle;
     final boolean printWikiFormat =
-        scoringStyle.isChallenge() || _config.forceWikiOutput;
+      scoringStyle.isChallenge() || _config.forceWikiOutput;
     final Map<String, ScoreError> errorMap =
-        getScoreErrorMap(scoreLog, scoringStyle, challenger);
+      getScoreErrorMap(scoreLog, scoringStyle, challenger);
 
     Runtime.getRuntime().addShutdownHook(new Thread(() -> scoreLog.saveScoreLog(xmlFilePath)));
 
     if (_config.seasons > 0) {
       BattleResultHandler resultHandler = newBattleResultHandler(scoreLog,
-          challenge, challenger, xmlFilePath, errorMap, printWikiFormat);
+        challenge, challenger, xmlFilePath, errorMap, printWikiFormat);
       if (_config.smartBattles) {
         BattleSelector battleSelector = newBattleSelector(
-            getBattleList(scoreLog, challenge, challenger, 2), challenge,
-            challenger, errorMap);
+          getBattleList(scoreLog, challenge, challenger, 2), challenge,
+          challenger, errorMap);
         int numBattles =
-            (_config.seasons) * (_config.challenge.allReferenceBots.size())
-                - scoreLog.getBattleCount(_config.challenge.allReferenceBots);
+          (_config.seasons) * (_config.challenge.allReferenceBots.size())
+            - scoreLog.getBattleCount(_config.challenge.allReferenceBots);
         _battleRunner.runBattles(battleSelector, resultHandler, numBattles);
       } else {
         _battleRunner.runBattles(
-            getBattleList(scoreLog, challenge, challenger), resultHandler);
+          getBattleList(scoreLog, challenge, challenger), resultHandler);
       }
       System.out.println();
       System.out.println("Done! Took "
-          + formatBattleTime(System.nanoTime() - startTime));
+        + formatBattleTime(System.nanoTime() - startTime));
       System.out.println();
     }
 
     printAllScores(scoreLog, challenge, errorMap);
     System.out.println();
     printOverallScores(
-        scoreLog, errorMap, challenger, challenge, printWikiFormat, true);
+      scoreLog, errorMap, challenger, challenge, printWikiFormat, true);
     System.out.println();
   }
 
   private void printRunnerHeaders(
-      ChallengeConfig challenge, String challenger) {
+    ChallengeConfig challenge, String challenger) {
     System.out.println();
     System.out.println("Challenger:     " + challenger);
     System.out.println("Challenge:      " + challenge.name);
     System.out.println("Seasons:        " + _config.seasons);
     System.out.println("Threads:        " + _config.robocodePaths.size());
     System.out.println("Scoring:        "
-        + challenge.scoringStyle.getDescription());
+      + challenge.scoringStyle.getDescription());
     System.out.println("Smart battles:  "
-        + (_config.smartBattles ? "On" : "Off"));
+      + (_config.smartBattles ? "On" : "Off"));
     System.out.println();
   }
 
   private List<BotList> getBattleList(
-      ScoreLog scoreLog, ChallengeConfig challenge, String challenger) {
+    ScoreLog scoreLog, ChallengeConfig challenge, String challenger) {
     return getBattleList(scoreLog, challenge, challenger, _config.seasons);
   }
 
   private List<BotList> getBattleList(ScoreLog scoreLog,
-      ChallengeConfig challenge, String challenger, int seasons) {
+                                      ChallengeConfig challenge, String challenger, int seasons) {
     Map<String, Integer> skipMap = getSkipMap(scoreLog);
     List<BotList> battleList = Lists.newArrayList();
     for (int x = 0; x < seasons; x++) {
@@ -397,17 +394,17 @@ public final class RoboRunner {
   }
 
   private Map<String, ScoreError> getScoreErrorMap(
-      ScoreLog scoreLog, ScoringStyle scoringStyle, String challenger) {
+    ScoreLog scoreLog, ScoringStyle scoringStyle, String challenger) {
     Map<String, ScoreError> errorMap = Maps.newHashMap();
     for (String botList : scoreLog.getBotLists()) {
       errorMap.put(botList,
-          getScoreError(scoreLog, scoringStyle, challenger, botList));
+        getScoreError(scoreLog, scoringStyle, challenger, botList));
     }
     return errorMap;
   }
 
   private ScoreError getScoreError(ScoreLog scoreLog,
-      ScoringStyle scoringStyle, String challenger, String botList) {
+                                   ScoringStyle scoringStyle, String challenger, String botList) {
     List<BattleScore> battleScores = scoreLog.getBattleScores(botList);
     List<Double> scores = Lists.newArrayList();
     for (BattleScore battleScore : battleScores) {
@@ -415,7 +412,7 @@ public final class RoboRunner {
       scores.add(scoringStyle.getScore(totalScore));
     }
     return new ScoreError(scores,
-        scoreLog.getAverageBattleScore(botList).getElapsedTime());
+      scoreLog.getAverageBattleScore(botList).getElapsedTime());
   }
 
   private ScoreLog loadScoreLog(String challengerBot, String filePath) {
@@ -431,43 +428,43 @@ public final class RoboRunner {
   }
 
   private void printBattleScore(String challenger, String botList,
-      BattleScore lastScore, BattleScore avgScore, ScoringStyle scoringStyle,
-      long elapsedTime, Map<String, ScoreError> errorMap) {
+                                BattleScore lastScore, BattleScore avgScore, ScoringStyle scoringStyle,
+                                long elapsedTime, Map<String, ScoreError> errorMap) {
     ScoreError scoreError = errorMap.get(botList);
     System.out.println("  " + challenger + " vs " +
-        botList.replace(",", ", ") + ": "
-        + round(scoringStyle.getScore(
-            lastScore.getRelativeTotalScore(challenger)), 2)
-        + ", took " + formatBattleTime(elapsedTime));
+      botList.replace(",", ", ") + ": "
+      + round(scoringStyle.getScore(
+      lastScore.getRelativeTotalScore(challenger)), 2)
+      + ", took " + formatBattleTime(elapsedTime));
     if (scoreError.numBattles > 1) {
       System.out.println("    Average: "
-          + round(scoringStyle.getScore(
-              avgScore.getRelativeTotalScore(challenger)), 2)
-          + "  +- " + round(1.96 * scoreError.getStandardError(), 2)
-          + "  (" +  scoreError.numBattles + " battles)");
+        + round(scoringStyle.getScore(
+        avgScore.getRelativeTotalScore(challenger)), 2)
+        + "  +- " + round(1.96 * scoreError.getStandardError(), 2)
+        + "  (" + scoreError.numBattles + " battles)");
     }
   }
 
   private void printOverallScores(ScoreLog scoreLog,
-      Map<String, ScoreError> errorMap, String challenger,
-      ChallengeConfig challenge, boolean printWikiFormat, boolean finalScore) {
+                                  Map<String, ScoreError> errorMap, String challenger,
+                                  ChallengeConfig challenge, boolean printWikiFormat, boolean finalScore) {
     ScoringStyle scoringStyle = challenge.scoringStyle;
     ScoreSummary scoreSummary = getScoreSummary(
-        scoreLog, challenge.allReferenceBots, scoringStyle);
+      scoreLog, challenge.allReferenceBots, scoringStyle);
     int challengeBotLists = challenge.allReferenceBots.size();
     double numSeasons =
-        round(((double) scoreSummary.numBattles) / challengeBotLists, 2);
+      round(((double) scoreSummary.numBattles) / challengeBotLists, 2);
     double overallScore;
     StringBuilder groupScores = new StringBuilder();
     StringBuilder wikiScores = new StringBuilder();
     wikiScores.append("| [[").append(
-            challenger.replaceAll("^[^ ]*\\.", "").replace(" ", "]] "))
-        .append(" || [[User:Author|Author]] || Type || ");
+      challenger.replaceAll("^[^ ]*\\.", "").replace(" ", "]] "))
+      .append(" || [[User:Author|Author]] || Type || ");
 
     boolean showConfidence = (getMinBattles(errorMap) >= 2);
     int confidenceIterations =
-        (finalScore ? Math.min(20000, 10000000 / scoreSummary.numBattles)
-                    : Math.min(1000, 100000 / scoreSummary.numBattles));
+      (finalScore ? Math.min(20000, 10000000 / scoreSummary.numBattles)
+        : Math.min(1000, 100000 / scoreSummary.numBattles));
     double confidence = 0;
     if (challenge.hasGroups()) {
       double sumGroups = 0;
@@ -480,10 +477,10 @@ public final class RoboRunner {
           }
         }
         ScoreSummary summary = getScoreSummary(
-            scoreLog, group.referenceBots, scoringStyle);
+          scoreLog, group.referenceBots, scoringStyle);
         double groupScore = summary.getTotalScore();
         groupScores.append("  ").append(group.name).append(": ")
-            .append(groupScore).append("\n");
+          .append(groupScore).append("\n");
         wikiScores.append("'''").append(groupScore).append("''' || ");
         if (summary.scoredBotLists > 0) {
           sumGroups += groupScore;
@@ -491,11 +488,11 @@ public final class RoboRunner {
         }
       }
       ScoreSummary overallSummary =
-          new ScoreSummary(sumGroups, scoredGroups, scoredGroups);
+        new ScoreSummary(sumGroups, scoredGroups, scoredGroups);
       overallScore = overallSummary.getTotalScore();
       if (showConfidence) {
         confidence = getGroupsConfidence(scoreLog, challenge.referenceBotGroups,
-            errorMap, confidenceIterations);
+          errorMap, confidenceIterations);
       }
     } else {
       if (printWikiFormat) {
@@ -507,20 +504,20 @@ public final class RoboRunner {
       overallScore = scoreSummary.getTotalScore();
       if (showConfidence) {
         confidence = getOverallConfidence(scoreLog, challenge.allReferenceBots,
-            errorMap, confidenceIterations);
+          errorMap, confidenceIterations);
       }
     }
 
     String botsFaced = "";
     if (scoreSummary.scoredBotLists < challenge.allReferenceBots.size()) {
       double percentBotsFaced = 100 * ((double) scoreSummary.scoredBotLists)
-          / challenge.allReferenceBots.size();
+        / challenge.allReferenceBots.size();
       botsFaced = "  (" + round(Math.min(percentBotsFaced, 99.9), 1)
-          + "% bots faced)";
+        + "% bots faced)";
     }
     System.out.println("Overall score: " + overallScore
-        + (showConfidence ? "  +- " + round(confidence, 2) : "")
-        + "  (" + numSeasons + " seasons)" + botsFaced);
+      + (showConfidence ? "  +- " + round(confidence, 2) : "")
+      + "  (" + numSeasons + " seasons)" + botsFaced);
     wikiScores.append("'''").append(overallScore).append("''' || ");
     wikiScores.append(numSeasons).append(" seasons");
     if (groupScores.length() > 0) {
@@ -533,17 +530,17 @@ public final class RoboRunner {
   }
 
   private double getOverallConfidence(ScoreLog scoreLog, List<BotList> botLists,
-      Map<String, ScoreError> errorMap, int iterations) {
+                                      Map<String, ScoreError> errorMap, int iterations) {
     List<Double> overallScores = Lists.newArrayList();
     for (int x = 0; x < iterations; x++) {
       overallScores.add(
-          generateOverallScore(scoreLog, botLists, errorMap));
+        generateOverallScore(scoreLog, botLists, errorMap));
     }
     return 1.96 * RunnerUtil.standardDeviation(overallScores);
   }
 
   private double generateOverallScore(ScoreLog scoreLog, List<BotList> botLists,
-      Map<String, ScoreError> errorMap) {
+                                      Map<String, ScoreError> errorMap) {
     double overallTotal = 0;
     int numScores = 0;
     for (BotList botList : botLists) {
@@ -558,19 +555,19 @@ public final class RoboRunner {
   }
 
   private double getGroupsConfidence(ScoreLog scoreLog,
-      List<BotListGroup> botListGroups, Map<String, ScoreError> errorMap,
-      int iterations) {
+                                     List<BotListGroup> botListGroups, Map<String, ScoreError> errorMap,
+                                     int iterations) {
     List<Double> overallScores = Lists.newArrayList();
     for (int x = 0; x < iterations; x++) {
       overallScores.add(
-          generateGroupsScore(scoreLog, botListGroups, errorMap));
+        generateGroupsScore(scoreLog, botListGroups, errorMap));
     }
     return 1.96 * RunnerUtil.standardDeviation(overallScores);
   }
 
 
   private double generateGroupsScore(ScoreLog scoreLog,
-      List<BotListGroup> botListGroups, Map<String, ScoreError> errorMap) {
+                                     List<BotListGroup> botListGroups, Map<String, ScoreError> errorMap) {
     double overallTotal = 0;
     int numGroupScores = 0;
     for (BotListGroup group : botListGroups) {
@@ -593,7 +590,7 @@ public final class RoboRunner {
   }
 
   private ScoreSummary getScoreSummary(ScoreLog scoreLog,
-      List<BotList> referenceBots, ScoringStyle scoringStyle) {
+                                       List<BotList> referenceBots, ScoringStyle scoringStyle) {
     double sumScores = 0;
     int numBattles = 0;
     int scoredBotLists = 0;
@@ -601,8 +598,8 @@ public final class RoboRunner {
       String botListString = scoreLog.getSortedBotList(botList.getBotNames());
       if (scoreLog.hasBotList(botListString)) {
         RobotScore totalRobotScore = scoreLog
-            .getAverageBattleScore(botListString)
-            .getRelativeTotalScore(scoreLog.challenger);
+          .getAverageBattleScore(botListString)
+          .getRelativeTotalScore(scoreLog.challenger);
         sumScores += scoringStyle.getScore(totalRobotScore);
         scoredBotLists++;
         numBattles += totalRobotScore.numBattles;
@@ -612,45 +609,45 @@ public final class RoboRunner {
   }
 
   private double getWikiScore(
-      ScoreLog scoreLog, BotList botList, ScoringStyle scoringStyle) {
+    ScoreLog scoreLog, BotList botList, ScoringStyle scoringStyle) {
     String botListString = scoreLog.getSortedBotList(botList.getBotNames());
     double score = -1;
     if (scoreLog.hasBotList(botListString)) {
       RobotScore totalRobotScore = scoreLog
-          .getAverageBattleScore(botListString)
-          .getRelativeTotalScore(scoreLog.challenger);
+        .getAverageBattleScore(botListString)
+        .getRelativeTotalScore(scoreLog.challenger);
       score = round(scoringStyle.getScore(totalRobotScore), 2);
     }
     return score;
   }
 
   private void printAllScores(ScoreLog scoreLog, ChallengeConfig challenge,
-      Map<String, ScoreError> errorMap) {
+                              Map<String, ScoreError> errorMap) {
     System.out.println("All scores:");
     for (BotList botList : challenge.allReferenceBots) {
       String botListString = scoreLog.getSortedBotList(botList.getBotNames());
       if (scoreLog.hasBotList(botListString)) {
         RobotScore totalRobotScore = scoreLog
-            .getAverageBattleScore(botListString)
-            .getRelativeTotalScore(scoreLog.challenger);
+          .getAverageBattleScore(botListString)
+          .getRelativeTotalScore(scoreLog.challenger);
         ScoreError scoreError = errorMap.get(botListString);
         System.out.println("  " + botListString + ": "
-            + round(challenge.scoringStyle.getScore(totalRobotScore), 2)
-            + (scoreError.numBattles > 1
-                ? "  +- " + round(1.96 * scoreError.getStandardError(), 2) : "")
-            + "  (" +  scoreError.numBattles + " battles)");
+          + round(challenge.scoringStyle.getScore(totalRobotScore), 2)
+          + (scoreError.numBattles > 1
+          ? "  +- " + round(1.96 * scoreError.getStandardError(), 2) : "")
+          + "  (" + scoreError.numBattles + " battles)");
       }
     }
   }
 
   private void printMeleeScores(BattleScore lastScore, BattleScore avgScore,
-      String challenger, ScoringStyle scoringStyle) {
+                                String challenger, ScoringStyle scoringStyle) {
     RobotScore challengerScore = lastScore.getRobotScore(challenger);
     RobotScore avgChallengerScore = avgScore.getRobotScore(challenger);
 
     Map<RobotScore, RobotScore> avgScoreMap = Maps.newHashMap();
     List<RobotScore> avgRobotScores =
-        Lists.newArrayList(avgScore.getRobotScores());
+      Lists.newArrayList(avgScore.getRobotScores());
     avgRobotScores.remove(avgChallengerScore);
     for (RobotScore robotScore : lastScore.getRobotScores()) {
       if (robotScore != challengerScore) {
@@ -668,13 +665,13 @@ public final class RoboRunner {
     for (RobotScore robotScore : lastScore.getRobotScores()) {
       if (robotScore != challengerScore) {
         RobotScore relativeScore = challengerScore.getScoreRelativeTo(
-            robotScore, lastScore.getNumRounds());
+          robotScore, lastScore.getNumRounds());
         RobotScore avgRelativeScore = avgChallengerScore.getScoreRelativeTo(
-            avgScoreMap.get(robotScore), avgScore.getNumRounds());
+          avgScoreMap.get(robotScore), avgScore.getNumRounds());
         System.out.println("    vs " + robotScore.botName + ": "
-            + round(scoringStyle.getScore(relativeScore), 2)
-            + ", avg: "
-            + round(scoringStyle.getScore(avgRelativeScore), 2));
+          + round(scoringStyle.getScore(relativeScore), 2)
+          + ", avg: "
+          + round(scoringStyle.getScore(avgRelativeScore), 2));
       }
     }
   }
@@ -706,9 +703,9 @@ public final class RoboRunner {
   }
 
   private BattleResultHandler newBattleResultHandler(final ScoreLog scoreLog,
-      final ChallengeConfig challenge, final String challenger,
-      final String xmlFilePath, final Map<String, ScoreError> errorMap,
-      final boolean printWikiFormat) {
+                                                     final ChallengeConfig challenge, final String challenger,
+                                                     final String xmlFilePath, final Map<String, ScoreError> errorMap,
+                                                     final boolean printWikiFormat) {
     final ScoringStyle scoringStyle = challenge.scoringStyle;
     return (robotScores, elapsedTime) -> {
       scoreLog.addBattle(robotScores, challenge.rounds, elapsedTime);
@@ -718,22 +715,22 @@ public final class RoboRunner {
       BattleScore lastScore = scoreLog.getLastBattleScore(botList);
       BattleScore avgScore = scoreLog.getAverageBattleScore(botList);
       errorMap.put(botList,
-          getScoreError(scoreLog, scoringStyle, challenger, botList));
+        getScoreError(scoreLog, scoringStyle, challenger, botList));
 
       printBattleScore(challenger, botList, lastScore, avgScore,
-          scoringStyle, elapsedTime, errorMap);
+        scoringStyle, elapsedTime, errorMap);
       if (robotScores.size() > 2) {
         printMeleeScores(lastScore, avgScore, challenger, scoringStyle);
       }
       printOverallScores(
-          scoreLog, errorMap, challenger, challenge, printWikiFormat, false);
+        scoreLog, errorMap, challenger, challenge, printWikiFormat, false);
       _runningBotLists.remove(botList);
     };
   }
 
   private BattleSelector newBattleSelector(List<BotList> initialBattles,
-      final ChallengeConfig challenge, final String challenger,
-      final Map<String, ScoreError> errorMap) {
+                                           final ChallengeConfig challenge, final String challenger,
+                                           final Map<String, ScoreError> errorMap) {
     final LinkedList<BotList> battleList = Lists.newLinkedList(initialBattles);
     return () -> {
       if (!battleList.isEmpty()) {
@@ -742,7 +739,7 @@ public final class RoboRunner {
 
       int minBattles = getMinBattles(errorMap);
       double randomBattleChance =
-          SMART_BATTLE_RANDOM_RATE / power(2, minBattles - 2);
+        SMART_BATTLE_RANDOM_RATE / power(2, minBattles - 2);
       String nextBotListString = null;
       if (Math.random() < randomBattleChance) {
         List<String> minBotLists = Lists.newArrayList();
@@ -752,13 +749,14 @@ public final class RoboRunner {
           }
         }
         nextBotListString =
-            minBotLists.get((int) Math.random() * minBotLists.size());
+          minBotLists.get((int) Math.random() * minBotLists.size());
       } else {
         double bestGain = Double.NEGATIVE_INFINITY;
         for (Map.Entry<String, ScoreError> entry : errorMap.entrySet()) {
           String botListString = entry.getKey();
           if (challenge.allReferenceBots.size() <= _config.threads
-              || !_runningBotLists.contains(botListString)) {
+            || !_runningBotLists.contains(botListString))
+          {
             double accuracyGain = entry.getValue().getAccuracyGainRate();
             if (accuracyGain > bestGain) {
               bestGain = accuracyGain;
@@ -773,7 +771,7 @@ public final class RoboRunner {
       }
       _runningBotLists.add(nextBotListString);
       List<String> nextBotList =
-          Lists.newArrayList(nextBotListString.split(","));
+        Lists.newArrayList(nextBotListString.split(","));
       nextBotList.add(challenger);
       return new BotList(nextBotList);
     };
@@ -791,8 +789,8 @@ public final class RoboRunner {
     public final int threads;
 
     public RunnerConfig(Set<String> robocodePaths, String jvmArgs,
-        List<String> botsDirs, ChallengeConfig challenge, String challengerBot,
-        int seasons, boolean forceWikiOutput, boolean smartBattles) {
+                        List<String> botsDirs, ChallengeConfig challenge, String challengerBot,
+                        int seasons, boolean forceWikiOutput, boolean smartBattles) {
       this.robocodePaths = Preconditions.checkNotNull(robocodePaths);
       this.jvmArgs = Preconditions.checkNotNull(jvmArgs);
       this.botsDirs = Preconditions.checkNotNull(botsDirs);
@@ -811,7 +809,7 @@ public final class RoboRunner {
     public final int scoredBotLists;
 
     public ScoreSummary(
-        double sumScores, int numBattles, int scoredBotLists) {
+      double sumScores, int numBattles, int scoredBotLists) {
       this.sumScores = sumScores;
       this.numBattles = numBattles;
       this.scoredBotLists = scoredBotLists;

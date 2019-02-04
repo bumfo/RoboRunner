@@ -17,9 +17,11 @@ import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.XMLEvent;
+import javax.xml.stream.util.XMLEventConsumer;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -27,6 +29,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -87,8 +90,7 @@ public final class ScoreLog {
   }
 
   public final String getSortedBotListFromScores(List<RobotScore> robotScores) {
-    List<String> botList = Lists.newArrayList(Lists.transform(
-      robotScores, ROBOT_SCORE_NAME_TRANSFORMER::apply));
+    List<String> botList = robotScores.stream().map(ROBOT_SCORE_NAME_TRANSFORMER).collect(Collectors.toCollection(ArrayList::new));
     botList.remove(challenger);
     return getSortedBotList(botList);
   }
@@ -354,7 +356,7 @@ public final class ScoreLog {
     writeElement(eventWriter, name, numTabs, null, false);
   }
 
-  private void writeElement(XMLEventWriter eventWriter, String name,
+  private void writeElement(XMLEventConsumer eventWriter, String name,
                             int numTabs, List<Attribute> attributes, boolean start)
     throws XMLStreamException {
     for (int x = 0; x < numTabs; x++) {
@@ -374,7 +376,7 @@ public final class ScoreLog {
     writeValue(eventWriter, name, Long.toString(value), numTabs);
   }
 
-  private void writeValue(XMLEventWriter eventWriter, String name, String value,
+  private void writeValue(XMLEventConsumer eventWriter, String name, String value,
                           int numTabs) throws XMLStreamException {
     for (int x = 0; x < numTabs; x++) {
       eventWriter.add(XML_TAB);

@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static robowiki.runner.RunnerUtil.getCombinedArgs;
 import static robowiki.runner.RunnerUtil.parseBooleanArgument;
@@ -175,10 +176,8 @@ public final class RoboRunner {
                                   String challengeFilePath, int seasons, int threads,
                                   boolean forceWikiOutput, boolean smartBattles) {
     Properties runnerProperties = loadRoboRunnerProperties();
-    Iterable<String> pathsIterator = Iterables.transform(
-      Lists.newArrayList(runnerProperties.getProperty(ROBOCODE_PATHS_PROPERTY)
-        .replaceAll(SLASH + "+", SLASH).split(" *, *")),
-      input -> input.replaceAll(SLASH + "$", ""));
+    Iterable<String> pathsIterator = Lists.newArrayList(runnerProperties.getProperty(ROBOCODE_PATHS_PROPERTY)
+      .replaceAll(SLASH + "+", SLASH).split(" *, *")).stream().map(input -> input.replaceAll(SLASH + "$", "")).collect(Collectors.toList());
 
     Set<String> robocodePaths = Sets.newHashSet();
     for (String path : pathsIterator) {

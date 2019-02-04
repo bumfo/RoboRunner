@@ -86,7 +86,7 @@ public final class RobotScore {
   }
 
   private double getAverageScore(
-    Function<RobotScore, Double> scorer, Collection<RobotScore> enemyScores) {
+    Function<RobotScore, Double> scorer, Iterable<RobotScore> enemyScores) {
     double totalScore = 0;
     double challengerScore = scorer.apply(this);
     int numScores = 0;

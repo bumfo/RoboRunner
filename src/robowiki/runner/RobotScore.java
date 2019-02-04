@@ -3,7 +3,6 @@ package robowiki.runner;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 

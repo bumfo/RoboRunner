@@ -62,7 +62,15 @@ task generateScripts(dependsOn: copyLibs) {
 }
 
 task deploy(dependsOn: copyLibs, type: Copy) {
-    from 'scripts'
-    from generateScripts.getOutputs()
+    from('scripts') {
+        include '*.sh'
+        fileMode = 0755
+    }
+    from('scripts') {
+        exclude '*.sh'
+    }
+    from(generateScripts.getOutputs()) {
+        fileMode = 0755
+    }
     into "$distDir"
 }

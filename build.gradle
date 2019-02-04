@@ -1,0 +1,26 @@
+plugins {
+    id 'java'
+}
+
+group 'roborunner'
+version '2.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile files('libs/robocode.jar')
+    compile group: 'com.google.guava', name: 'guava', version: '23.5-jre'
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+sourceSets {
+    main {
+        java {
+            srcDir 'src'
+        }
+    }
+}

@@ -27,10 +27,10 @@ sourceSets {
     }
 }
 
-def distDir = "$buildDir/dist"
+project.ext.distDir = "$buildDir/dist"
 
 task cleanDist(dependsOn: build, type: Delete) {
-    delete[distDir]
+    delete["$distDir"]
 }
 
 task copyDependencies(dependsOn: cleanDist, type: Copy) {
@@ -47,7 +47,6 @@ task copyLibs(dependsOn: copyDependencies, type: Copy) {
 
 
 task generateScripts(dependsOn: copyLibs) {
-
     String genOutputDir = file("$buildDir/generated-scripts")
 
     File outputFile = file("$genOutputDir/rr.sh")

@@ -58,14 +58,12 @@ public final class BattleRunner {
       ProcessBuilder builder = new ProcessBuilder(command);
       builder.redirectErrorStream(true);
       Process battleProcess = builder.start();
-      try (BufferedReader reader = new BufferedReader(
-        new InputStreamReader(battleProcess.getInputStream())))
-      {
-        String processOutput;
-        do {
-          processOutput = reader.readLine();
-        } while (!processOutput.equals(BattleProcess.READY_SIGNAL));
-      }
+      BufferedReader reader = new BufferedReader(
+        new InputStreamReader(battleProcess.getInputStream()));
+      String processOutput;
+      do {
+        processOutput = reader.readLine();
+      } while (!processOutput.equals(BattleProcess.READY_SIGNAL));
       System.out.println("done!");
       _processQueue.add(battleProcess);
     } catch (IOException e) {
@@ -172,30 +170,28 @@ public final class BattleRunner {
     public final String call() throws Exception {
       final long startTime = System.nanoTime();
       Process battleProcess = _processQueue.poll();
-
-      try (BufferedReader reader = new BufferedReader(new InputStreamReader(battleProcess.getInputStream()))) {
-        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(battleProcess.getOutputStream()))) {
-          BotList botList;
-          if (_selector == null) {
-            botList = _botList;
-          } else {
-            botList = _callbackPool.submit(() -> _selector.nextBotList()).get();
-          }
-          writer.append(COMMA_JOINER.join(botList.getBotNames())).append("\n");
-          writer.flush();
-        }
-        String input;
-        do {
-          // TODO: How to handle other output, errors etc?
-          input = reader.readLine();
-        } while (!isBattleResult(input));
-
-        final String result = input;
-        _processQueue.add(battleProcess);
-        _callbackPool.submit(() -> _listener.processResults(
-          getRobotScoreList(result), System.nanoTime() - startTime)).get();
-        return result;
+      BufferedWriter writer = new BufferedWriter(
+        new OutputStreamWriter(battleProcess.getOutputStream()));
+      BufferedReader reader = new BufferedReader(
+        new InputStreamReader(battleProcess.getInputStream()));
+      BotList botList;
+      if (_selector == null) {
+        botList = _botList;
+      } else {
+        botList = _callbackPool.submit(() -> _selector.nextBotList()).get();
       }
+      writer.append(COMMA_JOINER.join(botList.getBotNames()) + "\n");
+      writer.flush();
+      String input;
+      do {
+        // TODO: How to handle other output, errors etc?
+        input = reader.readLine();
+      } while (!isBattleResult(input));
+      final String result = input;
+      _processQueue.add(battleProcess);
+      _callbackPool.submit(() -> _listener.processResults(
+        getRobotScoreList(result), System.nanoTime() - startTime)).get();
+      return result;
     }
   }
 }

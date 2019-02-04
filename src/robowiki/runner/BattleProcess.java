@@ -33,7 +33,7 @@ public final class BattleProcess {
   private final RobocodeEngine _engine;
   private final BattleListener _listener;
 
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) {
     args = getCombinedArgs(args);
     String robocodePath = parseStringArgument("path", args,
       "Pass a path to Robocode with -path");
@@ -47,16 +47,16 @@ public final class BattleProcess {
     BattleProcess process =
       new BattleProcess(robocodePath, numRounds, width, height);
     System.out.println(READY_SIGNAL);
-    try (BufferedReader stdin = new BufferedReader(new InputStreamReader(System.in))) {
-      while (true) {
-        try {
-          String line = stdin.readLine();
-          System.out.println("Processing " + line);
-          String result = process.runBattle(getBotList(line));
-          System.out.println(RESULT_SIGNAL + result);
-        } catch (IOException e) {
-          e.printStackTrace();
-        }
+    BufferedReader stdin =
+      new BufferedReader(new InputStreamReader(System.in));
+    while (true) {
+      try {
+        String line = stdin.readLine();
+        System.out.println("Processing " + line);
+        String result = process.runBattle(getBotList(line));
+        System.out.println(RESULT_SIGNAL + result);
+      } catch (IOException e) {
+        e.printStackTrace();
       }
     }
   }

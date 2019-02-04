@@ -9,14 +9,14 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 
-public class BattleListener extends BattleAdaptor {
-  private Multimap<String, RobotResults> _botResults;
+public final class BattleListener extends BattleAdaptor {
+  private final Multimap<String, RobotResults> _botResults;
 
   public BattleListener() {
     _botResults = ArrayListMultimap.create();
   }
 
-  public void onBattleCompleted(BattleCompletedEvent completedEvent) {
+  public final void onBattleCompleted(BattleCompletedEvent completedEvent) {
     RobotResults[] robotResultsArray =
         RobotResults.convertResults(completedEvent.getIndexedResults());
     for (RobotResults robotResults : robotResultsArray) {
@@ -24,15 +24,15 @@ public class BattleListener extends BattleAdaptor {
     }
   }
 
-  public void onBattleError(BattleErrorEvent battleErrorEvent) {
+  public final void onBattleError(BattleErrorEvent battleErrorEvent) {
     System.out.println("Robocode error: " + battleErrorEvent.getError());
   }
 
-  public Multimap<String, RobotResults> getRobotResultsMap() {
+  public final Multimap<String, RobotResults> getRobotResultsMap() {
     return ImmutableMultimap.copyOf(_botResults);
   }
 
-  public void clear() {
+  public final void clear() {
     _botResults.clear();
   }
 }

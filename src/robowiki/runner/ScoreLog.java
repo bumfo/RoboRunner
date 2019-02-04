@@ -1,17 +1,12 @@
 package robowiki.runner;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.LinkedListMultimap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLEventFactory;
@@ -22,22 +17,26 @@ import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.XMLEvent;
-
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.LinkedListMultimap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * Score history for a challenger bot. Saves to and loads from XML files.
  *
  * @author Voidious
  */
-public class ScoreLog {
+public final class ScoreLog {
   private static final String CHALLENGER = "challenger";
   private static final String SCORES = "scores";
   private static final String BOT_LIST = "bot_list";
@@ -53,21 +52,16 @@ public class ScoreLog {
   private static final String TIME = "time";
   private static final Joiner COMMA_JOINER = Joiner.on(",");
   private static final Function<RobotScore, String> ROBOT_SCORE_NAME_TRANSFORMER
-      = new Function<RobotScore, String>() {
-        @Override
-        public String apply(RobotScore robotScore) {
-          return robotScore.botName;
-        }
-      };
+      = robotScore -> robotScore.botName;
 
-  private static XMLEventFactory XML_EVENT_FACTORY =
+  private static final XMLEventFactory XML_EVENT_FACTORY =
       XMLEventFactory.newInstance();
-  private static XMLEvent XML_TAB = XML_EVENT_FACTORY.createDTD("\t");
-  private static XMLEvent XML_NL = XML_EVENT_FACTORY.createDTD("\n");
+  private static final XMLEvent XML_TAB = XML_EVENT_FACTORY.createDTD("\t");
+  private static final XMLEvent XML_NL = XML_EVENT_FACTORY.createDTD("\n");
 
   public final String challenger;
-  private Map<String, List<BattleScore>> _scores;
-  private List<String> _botLists;
+  private final Map<String, List<BattleScore>> _scores;
+  private final List<String> _botLists;
 
   public ScoreLog(String challenger) {
     this.challenger = Preconditions.checkNotNull(challenger);
@@ -82,43 +76,43 @@ public class ScoreLog {
    * @param numRounds number of rounds in the battle
    * @param elapsedTime elapsed time of the battle, in nanoseconds
    */
-  public void addBattle(
-      List<RobotScore> robotScores, int numRounds, long elapsedTime) {
+  public final void addBattle(
+    List<RobotScore> robotScores, int numRounds, long elapsedTime) {
     String botListString = getSortedBotListFromScores(robotScores);
     if (!_scores.containsKey(botListString)) {
-      _scores.put(botListString, Lists.<BattleScore>newArrayList());
+      _scores.put(botListString, Lists.newArrayList());
       _botLists.add(botListString);
     }
     _scores.get(botListString).add(
         new BattleScore(robotScores, numRounds, elapsedTime));
   }
 
-  public String getSortedBotListFromScores(List<RobotScore> robotScores) {
+  public final String getSortedBotListFromScores(List<RobotScore> robotScores) {
     List<String> botList = Lists.newArrayList(Lists.transform(
-        robotScores, ROBOT_SCORE_NAME_TRANSFORMER));
+        robotScores, ROBOT_SCORE_NAME_TRANSFORMER::apply));
     botList.remove(challenger);
     return getSortedBotList(botList);
   }
 
-  public String getSortedBotList(List<String> botList) {
+  public final String getSortedBotList(List<String> botList) {
     List<String> sortedBotList = Lists.newArrayList(botList);
     Collections.sort(sortedBotList);
     return COMMA_JOINER.join(sortedBotList);
   }
 
-  public List<String> getBotLists() {
+  public final List<String> getBotLists() {
     return ImmutableList.copyOf(_botLists);
   }
 
-  public boolean hasBotList(String botListString) {
+  public final boolean hasBotList(String botListString) {
     return _scores.containsKey(botListString);
   }
 
-  public List<BattleScore> getBattleScores(String botList) {
+  public final List<BattleScore> getBattleScores(String botList) {
     return ImmutableList.copyOf(_scores.get(botList));
   }
 
-  public BattleScore getLastBattleScore(String botList) {
+  public final BattleScore getLastBattleScore(String botList) {
     if (!_scores.containsKey(botList)) {
       return null;
     }
@@ -126,7 +120,7 @@ public class ScoreLog {
     return battleScores.get(battleScores.size() - 1);
   }
 
-  public BattleScore getAverageBattleScore(String botList) {
+  public final BattleScore getAverageBattleScore(String botList) {
     if (!_scores.containsKey(botList)) {
       return null;
     }
@@ -156,7 +150,7 @@ public class ScoreLog {
         totalRounds / battleScores.size(), totalTime / battleScores.size());
   }
 
-  public int getBattleCount(List<BotList> allReferenceBots) {
+  public final int getBattleCount(List<BotList> allReferenceBots) {
     int battles = 0;
     for (BotList botList : allReferenceBots) {
       String botListString = getSortedBotList(botList.getBotNames());
@@ -264,7 +258,7 @@ public class ScoreLog {
    *
    * @param outputFilePath the path of the output file
    */
-  public void saveScoreLog(String outputFilePath) {
+  public final void saveScoreLog(String outputFilePath) {
     XMLEventWriter eventWriter = null;
     GZIPOutputStream gzipOutputStream = null;
     try {
@@ -310,11 +304,7 @@ public class ScoreLog {
       eventWriter.add(XML_EVENT_FACTORY.createEndDocument());
       eventWriter.close();
       gzipOutputStream.close();
-    } catch (FileNotFoundException e) {
-      e.printStackTrace();
-    } catch (IOException e) {
-      e.printStackTrace();
-    } catch (XMLStreamException e) {
+    } catch (XMLStreamException | IOException e) {
       e.printStackTrace();
     } finally {
       if (eventWriter != null) {
@@ -390,7 +380,7 @@ public class ScoreLog {
    *
    * @author Voidious
    */
-  public static class BattleScore {
+  public static final class BattleScore {
     private final List<RobotScore> _robotScores;
     private final int _numRounds;
     private final long _elapsedTime;
@@ -402,19 +392,19 @@ public class ScoreLog {
       _elapsedTime = nanoTime;
     }
 
-    public List<RobotScore> getRobotScores() {
+    public final List<RobotScore> getRobotScores() {
       return _robotScores;
     }
 
-    public int getNumRounds() {
+    public final int getNumRounds() {
       return _numRounds;
     }
 
-    public long getElapsedTime() {
+    public final long getElapsedTime() {
       return _elapsedTime;
     }
 
-    public RobotScore getRobotScore(String botName) {
+    public final RobotScore getRobotScore(String botName) {
       for (RobotScore robotScore : _robotScores) {
         if (robotScore.botName.equals(botName)) {
           return robotScore;
@@ -423,7 +413,7 @@ public class ScoreLog {
       return null;
     }
 
-    public RobotScore getRelativeTotalScore(String botName) {
+    public final RobotScore getRelativeTotalScore(String botName) {
       RobotScore referenceScore = getRobotScore(botName);
       List<RobotScore> enemyScores = Lists.newArrayList(_robotScores);
       enemyScores.remove(referenceScore);

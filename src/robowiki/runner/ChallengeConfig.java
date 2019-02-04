@@ -12,7 +12,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
 
-public class ChallengeConfig {
+public final class ChallengeConfig {
   public static final String DEFAULT_GROUP = "";
 
   public final String name;
@@ -43,7 +43,7 @@ public class ChallengeConfig {
     return referenceBots;
   }
 
-  public boolean hasGroups() {
+  public final boolean hasGroups() {
     return referenceBotGroups.size() > 1;
   }
 
@@ -81,16 +81,13 @@ public class ChallengeConfig {
             groupBots = Lists.newArrayList();
           } else {
             List<String> botList = Lists.newArrayList(line.split(" *, *"));
-            Iterables.removeIf(botList, new Predicate<String>() {
-              @Override
-              public boolean apply(String botName) {
-                if (botName.contains(".") && botName.contains(" ")) {
-                  return false;
-                } else {
-                  System.out.println("WARNING: " + botName + " doesn't look "
-                      + "like a bot name, ignoring.");
-                  return true;
-                }
+            Iterables.removeIf(botList, botName -> {
+              if (botName.contains(".") && botName.contains(" ")) {
+                return false;
+              } else {
+                System.out.println("WARNING: " + botName + " doesn't look "
+                    + "like a bot name, ignoring.");
+                return true;
               }
             });
             maxBots = Math.max(maxBots, 1 + botList.size());
@@ -117,7 +114,7 @@ public class ChallengeConfig {
     return null;
   }
 
-  public static class BotListGroup {
+  public static final class BotListGroup {
     public final String name;
     public final List<BotList> referenceBots;
 

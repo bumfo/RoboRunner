@@ -3,7 +3,7 @@ package robowiki.runner;
 import java.util.List;
 import java.util.Random;
 
-public class ScoreError {
+public final class ScoreError {
   private static final Random RANDOM = new Random();
 
   public final double average;
@@ -18,7 +18,7 @@ public class ScoreError {
     this.avgTime = avgTime;
   }
 
-  public double getStandardError() {
+  public final double getStandardError() {
     return getStandardError(numBattles);
   }
 
@@ -26,12 +26,12 @@ public class ScoreError {
     return standardDeviation / Math.sqrt(errorBattles);
   }
 
-  public double getAccuracyGainRate() {
+  public final double getAccuracyGainRate() {
     return (getStandardError(numBattles) - getStandardError(numBattles + 1))
         / avgTime;
   }
 
-  public double generateRandomAverageScore() {
+  public final double generateRandomAverageScore() {
     double scoreTotal = 0;
     for (int x = 0; x < numBattles; x++) {
       scoreTotal += Math.max(0, Math.min(100, average

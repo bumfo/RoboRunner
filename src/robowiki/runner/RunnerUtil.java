@@ -4,7 +4,7 @@ import java.util.List;
 
 import com.google.common.collect.Lists;
 
-public class RunnerUtil {
+public final class RunnerUtil {
   public static String[] getCombinedArgs(String[] args) {
     List<String> argsList = Lists.newArrayList();
     String nextArg = "";
@@ -43,8 +43,8 @@ public class RunnerUtil {
   }
 
   public static boolean parseBooleanArgument(String flagName, String[] args) {
-    for (int x = 0; x < args.length; x++) {
-      if (args[x].equals("-" + flagName)) {
+    for (String arg : args) {
+      if (arg.equals("-" + flagName)) {
         return true;
       }
     }

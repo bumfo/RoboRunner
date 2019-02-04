@@ -5,8 +5,8 @@ import java.util.List;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
-public class BotList {
-  private List<String> _botNames;
+public final class BotList {
+  private final List<String> _botNames;
 
   public BotList(String botName) {
     _botNames = Lists.newArrayList(botName);
@@ -16,7 +16,7 @@ public class BotList {
     _botNames = Lists.newArrayList(botNames);
   }
 
-  public List<String> getBotNames() {
+  public final List<String> getBotNames() {
     return ImmutableList.copyOf(_botNames);
   }
 }

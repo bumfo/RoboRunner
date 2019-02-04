@@ -1,53 +1,28 @@
 package robowiki.runner;
 
-import java.util.Collection;
-import java.util.List;
-
-import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.function.Function;
 
 /**
  * A robot's score data for a single battle or a set of battles.
  *
  * @author Voidious
  */
-public class RobotScore {
+public final class RobotScore {
   public static final Function<RobotScore, Double> NORMAL_SCORER =
-      new Function<RobotScore, Double>() {
-        @Override
-        public Double apply(RobotScore robotScore) {
-          return robotScore.score;
-        }
-      };
-  public static final Function<RobotScore, Double> SURVIVAL_FIRSTS_SCORER = 
-      new Function<RobotScore, Double>() {
-        @Override
-        public Double apply(RobotScore robotScore) {
-          return robotScore.survivalRounds;
-        }
-      };
+    robotScore -> robotScore.score;
+  public static final Function<RobotScore, Double> SURVIVAL_FIRSTS_SCORER =
+    robotScore -> robotScore.survivalRounds;
   public static final Function<RobotScore, Double> SURVIVAL_SCORER =
-      new Function<RobotScore, Double>() {
-        @Override
-        public Double apply(RobotScore robotScore) {
-          return robotScore.survivalScore;
-        }
-      };
+    robotScore -> robotScore.survivalScore;
   public static final Function<RobotScore, Double> BULLET_DAMAGE_SCORER =
-      new Function<RobotScore, Double>() {
-        @Override
-        public Double apply(RobotScore robotScore) {
-          return robotScore.bulletDamage;
-        }
-      };
+    robotScore -> robotScore.bulletDamage;
   public static final Function<RobotScore, Double> MOVEMENT_CHALLENGE_SCORER =
-      new Function<RobotScore, Double>() {
-        @Override
-        public Double apply(RobotScore robotScore) {
-          return robotScore.energyConserved;
-        }
-      };
+    robotScore -> robotScore.energyConserved;
 
   public final String botName;
   public final double score;
@@ -87,20 +62,20 @@ public class RobotScore {
    * @param numRounds number of rounds in the battle
    * @return the {@code RobotScore} relative to the given enemy robot score
    */
-  public RobotScore getScoreRelativeTo(
-      RobotScore enemyScore, int numRounds) {
+  public final RobotScore getScoreRelativeTo(
+    RobotScore enemyScore, int numRounds) {
     return getScoreRelativeTo(Lists.newArrayList(enemyScore), numRounds);
   }
 
   /**
    * Calculates this score relative to the given enemy scores.
    * 
-   * @param enemyScore score data for the other robots in the battle
+   * @param enemyScores score data for the other robots in the battle
    * @param numRounds number of rounds in the battle
    * @return the {@code RobotScore} relative to the given enemy robot scores
    */
-  public RobotScore getScoreRelativeTo(
-      List<RobotScore> enemyScores, int numRounds) {
+  public final RobotScore getScoreRelativeTo(
+    List<RobotScore> enemyScores, int numRounds) {
     return new RobotScore(botName,
         getAverageScore(RobotScore.NORMAL_SCORER, enemyScores),
         getAverageScore(RobotScore.SURVIVAL_FIRSTS_SCORER, enemyScores),
@@ -111,7 +86,7 @@ public class RobotScore {
   }
 
   private double getAverageScore(
-      Function<RobotScore, Double> scorer, Collection<RobotScore> enemyScores) {
+    Function<RobotScore, Double> scorer, Collection<RobotScore> enemyScores) {
     double totalScore = 0;
     double challengerScore = scorer.apply(this);
     int numScores = 0;
@@ -170,12 +145,12 @@ public class RobotScore {
     BULLET_DAMAGE("Bullet Damage", BULLET_DAMAGE_SCORER, true),
     MOVEMENT_CHALLENGE("Movement Challenge", MOVEMENT_CHALLENGE_SCORER, true);
 
-    private String _description;
-    private Function<RobotScore, Double> _scorer;
-    private boolean _isChallenge;
+    private final String _description;
+    private final Function<RobotScore, Double> _scorer;
+    private final boolean _isChallenge;
 
-    private ScoringStyle(String description,
-        Function<RobotScore, Double> scorer, boolean isChallenge) {
+    ScoringStyle(String description,
+                 Function<RobotScore, Double> scorer, boolean isChallenge) {
       _description = description;
       _scorer = scorer;
       _isChallenge = isChallenge;

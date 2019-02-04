@@ -35,7 +35,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 
-public class RoboRunner {
+public final class RoboRunner {
   private static final String PROPERTIES_FILENAME = "roborunner.properties";
   private static final String DATA_DIR = "data";
   private static final String ROBOCODE_PATHS_PROPERTY = "robocodePaths";
@@ -47,7 +47,7 @@ public class RoboRunner {
   private static final double SMART_BATTLE_RANDOM_RATE = 0.1;
 
   private BattleRunner _battleRunner;
-  private RunnerConfig _config;
+  private final RunnerConfig _config;
   private boolean _missingBots;
   private List<String> _runningBotLists;
 
@@ -181,12 +181,7 @@ public class RoboRunner {
     Iterable<String> pathsIterator = Iterables.transform(
         Lists.newArrayList(runnerProperties.getProperty(ROBOCODE_PATHS_PROPERTY)
             .replaceAll(SLASH + "+", SLASH).split(" *, *")),
-        new Function<String, String>() {
-          @Override
-          public String apply(String input) {
-            return input.replaceAll(SLASH + "$", "");
-          }
-        });
+      input -> input.replaceAll(SLASH + "$", ""));
 
     Set<String> robocodePaths = Sets.newHashSet();
     for (String path : pathsIterator) {
@@ -244,8 +239,6 @@ public class RoboRunner {
   private void saveRoboRunnerProperties(Properties runnerProperties) {
     try {
       runnerProperties.store(new FileOutputStream(PROPERTIES_FILENAME), null);
-    } catch (FileNotFoundException e) {
-      e.printStackTrace();
     } catch (IOException e) {
       e.printStackTrace();
     }
@@ -299,11 +292,11 @@ public class RoboRunner {
     return bot.replaceAll(" ", "_") + ".jar";
   }
 
-  public boolean isMissingBots() {
+  public final boolean isMissingBots() {
     return _missingBots;
   }
 
-  public void runBattles() {
+  public final void runBattles() {
     final ChallengeConfig challenge = _config.challenge;
     final String challenger = _config.challengerBot;
     printRunnerHeaders(challenge, challenger);
@@ -317,12 +310,7 @@ public class RoboRunner {
     final Map<String, ScoreError> errorMap =
         getScoreErrorMap(scoreLog, scoringStyle, challenger);
 
-    Runtime.getRuntime().addShutdownHook(new Thread() {
-      @Override
-      public void run() {
-        scoreLog.saveScoreLog(xmlFilePath);
-      }
-    });
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> scoreLog.saveScoreLog(xmlFilePath)));
 
     if (_config.seasons > 0) {
       BattleResultHandler resultHandler = newBattleResultHandler(scoreLog,
@@ -435,11 +423,7 @@ public class RoboRunner {
     if (dataFile.exists()) {
       try {
         return ScoreLog.loadScoreLog(filePath);
-      } catch (FileNotFoundException e) {
-        e.printStackTrace();
-      } catch (XMLStreamException e) {
-        e.printStackTrace();
-      } catch (IOException e) {
+      } catch (IOException | XMLStreamException e) {
         e.printStackTrace();
       }
     }
@@ -696,10 +680,10 @@ public class RoboRunner {
   }
 
   private String formatBattleTime(long battleTime) {
-    return Double.toString(round((double) battleTime / 1000000000, 1)) + "s";
+    return round((double) battleTime / 1000000000, 1) + "s";
   }
 
-  public void shutdown() {
+  public final void shutdown() {
     if (_battleRunner != null) {
       _battleRunner.shutdown();
     }
@@ -726,28 +710,24 @@ public class RoboRunner {
       final String xmlFilePath, final Map<String, ScoreError> errorMap,
       final boolean printWikiFormat) {
     final ScoringStyle scoringStyle = challenge.scoringStyle;
-    return new BattleResultHandler() {
-      @Override
-      public void processResults(
-          List<RobotScore> robotScores, long elapsedTime) {
-        scoreLog.addBattle(robotScores, challenge.rounds, elapsedTime);
-        scoreLog.saveScoreLog(xmlFilePath);
+    return (robotScores, elapsedTime) -> {
+      scoreLog.addBattle(robotScores, challenge.rounds, elapsedTime);
+      scoreLog.saveScoreLog(xmlFilePath);
 
-        String botList = scoreLog.getSortedBotListFromScores(robotScores);
-        BattleScore lastScore = scoreLog.getLastBattleScore(botList);
-        BattleScore avgScore = scoreLog.getAverageBattleScore(botList);
-        errorMap.put(botList,
-            getScoreError(scoreLog, scoringStyle, challenger, botList));
+      String botList = scoreLog.getSortedBotListFromScores(robotScores);
+      BattleScore lastScore = scoreLog.getLastBattleScore(botList);
+      BattleScore avgScore = scoreLog.getAverageBattleScore(botList);
+      errorMap.put(botList,
+          getScoreError(scoreLog, scoringStyle, challenger, botList));
 
-        printBattleScore(challenger, botList, lastScore, avgScore,
-            scoringStyle, elapsedTime, errorMap);
-        if (robotScores.size() > 2) {
-          printMeleeScores(lastScore, avgScore, challenger, scoringStyle);
-        }
-        printOverallScores(
-            scoreLog, errorMap, challenger, challenge, printWikiFormat, false);
-        _runningBotLists.remove(botList);
+      printBattleScore(challenger, botList, lastScore, avgScore,
+          scoringStyle, elapsedTime, errorMap);
+      if (robotScores.size() > 2) {
+        printMeleeScores(lastScore, avgScore, challenger, scoringStyle);
       }
+      printOverallScores(
+          scoreLog, errorMap, challenger, challenge, printWikiFormat, false);
+      _runningBotLists.remove(botList);
     };
   }
 
@@ -755,54 +735,51 @@ public class RoboRunner {
       final ChallengeConfig challenge, final String challenger,
       final Map<String, ScoreError> errorMap) {
     final LinkedList<BotList> battleList = Lists.newLinkedList(initialBattles);
-    return new BattleSelector() {
-      @Override
-      public BotList nextBotList() {
-        if (!battleList.isEmpty()) {
-          return battleList.remove();
-        };
-
-        int minBattles = getMinBattles(errorMap);
-        double randomBattleChance =
-            SMART_BATTLE_RANDOM_RATE / power(2, minBattles - 2);
-        String nextBotListString = null;
-        if (Math.random() < randomBattleChance) {
-          List<String> minBotLists = Lists.newArrayList();
-          for (Map.Entry<String, ScoreError> entry : errorMap.entrySet()) {
-            if (entry.getValue().numBattles == minBattles) {
-              minBotLists.add(entry.getKey());
-            }
-          }
-          nextBotListString =
-              minBotLists.get((int) Math.random() * minBotLists.size());
-        } else {
-          double bestGain = Double.NEGATIVE_INFINITY;
-          for (Map.Entry<String, ScoreError> entry : errorMap.entrySet()) {
-            String botListString = entry.getKey();
-            if (challenge.allReferenceBots.size() <= _config.threads
-                || !_runningBotLists.contains(botListString)) {
-              double accuracyGain = entry.getValue().getAccuracyGainRate();
-              if (accuracyGain > bestGain) {
-                bestGain = accuracyGain;
-                nextBotListString = botListString;
-              }
-            }
-          }
-        }
-
-        if (nextBotListString == null) {
-          throw new RuntimeException("Failed to select a battle!");
-        }
-        _runningBotLists.add(nextBotListString);
-        List<String> nextBotList =
-            Lists.newArrayList(nextBotListString.split(","));
-        nextBotList.add(challenger);
-        return new BotList(nextBotList);
+    return () -> {
+      if (!battleList.isEmpty()) {
+        return battleList.remove();
       }
+
+      int minBattles = getMinBattles(errorMap);
+      double randomBattleChance =
+          SMART_BATTLE_RANDOM_RATE / power(2, minBattles - 2);
+      String nextBotListString = null;
+      if (Math.random() < randomBattleChance) {
+        List<String> minBotLists = Lists.newArrayList();
+        for (Map.Entry<String, ScoreError> entry : errorMap.entrySet()) {
+          if (entry.getValue().numBattles == minBattles) {
+            minBotLists.add(entry.getKey());
+          }
+        }
+        nextBotListString =
+            minBotLists.get((int) Math.random() * minBotLists.size());
+      } else {
+        double bestGain = Double.NEGATIVE_INFINITY;
+        for (Map.Entry<String, ScoreError> entry : errorMap.entrySet()) {
+          String botListString = entry.getKey();
+          if (challenge.allReferenceBots.size() <= _config.threads
+              || !_runningBotLists.contains(botListString)) {
+            double accuracyGain = entry.getValue().getAccuracyGainRate();
+            if (accuracyGain > bestGain) {
+              bestGain = accuracyGain;
+              nextBotListString = botListString;
+            }
+          }
+        }
+      }
+
+      if (nextBotListString == null) {
+        throw new RuntimeException("Failed to select a battle!");
+      }
+      _runningBotLists.add(nextBotListString);
+      List<String> nextBotList =
+          Lists.newArrayList(nextBotListString.split(","));
+      nextBotList.add(challenger);
+      return new BotList(nextBotList);
     };
   }
 
-  private static class RunnerConfig {
+  private static final class RunnerConfig {
     public final Set<String> robocodePaths;
     public final String jvmArgs;
     public final List<String> botsDirs;
@@ -828,7 +805,7 @@ public class RoboRunner {
     }
   }
 
-  private static class ScoreSummary {
+  private static final class ScoreSummary {
     public final double sumScores;
     public final int numBattles;
     public final int scoredBotLists;
@@ -840,7 +817,7 @@ public class RoboRunner {
       this.scoredBotLists = scoredBotLists;
     }
 
-    public double getTotalScore() {
+    public final double getTotalScore() {
       return round(sumScores / scoredBotLists, 2);
     }
   }

@@ -19,15 +19,15 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Queues;
 
-public class BattleRunner {
+public final class BattleRunner {
   private static final Joiner COMMA_JOINER = Joiner.on(",");
 
-  private Queue<Process> _processQueue;
-  private ExecutorService _threadPool;
-  private ExecutorService _callbackPool;
-  private int _numRounds;
-  private int _battleFieldWidth;
-  private int _battleFieldHeight;
+  private final Queue<Process> _processQueue;
+  private final ExecutorService _threadPool;
+  private final ExecutorService _callbackPool;
+  private final int _numRounds;
+  private final int _battleFieldWidth;
+  private final int _battleFieldHeight;
 
   public BattleRunner(Set<String> robocodeEnginePaths, String jvmArgs,
       int numRounds, int battleFieldWidth, int battleFieldHeight) {
@@ -71,7 +71,7 @@ public class BattleRunner {
     }
   }
 
-  public void runBattles(List<BotList> botLists, BattleResultHandler handler) {
+  public final void runBattles(List<BotList> botLists, BattleResultHandler handler) {
     List<Future<String>> futures = Lists.newArrayList();
     for (final BotList botList : botLists) {
       futures.add(_threadPool.submit(newBattleCallable(botList, handler)));
@@ -79,8 +79,8 @@ public class BattleRunner {
     getAllFutures(futures);
   }
 
-  public void runBattles(
-      BattleSelector selector, BattleResultHandler handler, int numBattles) {
+  public final void runBattles(
+    BattleSelector selector, BattleResultHandler handler, int numBattles) {
     List<Future<String>> futures = Lists.newArrayList();
     for (int x = 0; x < numBattles; x++) {
       futures.add(_threadPool.submit(newBattleCallable(selector, handler)));
@@ -92,9 +92,7 @@ public class BattleRunner {
     for (Future<String> future : futures) {
       try {
         future.get();
-      } catch (InterruptedException e) {
-        e.printStackTrace();
-      } catch (ExecutionException e) {
+      } catch (InterruptedException | ExecutionException e) {
         e.printStackTrace();
       }
     }
@@ -133,7 +131,7 @@ public class BattleRunner {
     return line != null && line.startsWith(BattleProcess.RESULT_SIGNAL);
   }
 
-  public void shutdown() {
+  public final void shutdown() {
     _threadPool.shutdown();
     _callbackPool.shutdown();
   }
@@ -152,10 +150,10 @@ public class BattleRunner {
     BotList nextBotList();
   }
 
-  private class BattleCallable implements Callable<String> {
+  private final class BattleCallable implements Callable<String> {
     private BotList _botList;
     private BattleSelector _selector;
-    private BattleResultHandler _listener;
+    private final BattleResultHandler _listener;
 
     public BattleCallable(BotList botList, BattleResultHandler listener) {
       _botList = botList;
@@ -169,7 +167,7 @@ public class BattleRunner {
     }
 
     @Override
-    public String call() throws Exception {
+    public final String call() throws Exception {
       final long startTime = System.nanoTime();
       Process battleProcess = _processQueue.poll();
       BufferedWriter writer = new BufferedWriter(
@@ -180,12 +178,7 @@ public class BattleRunner {
       if (_selector == null) {
         botList = _botList;
       } else {
-        botList = _callbackPool.submit(new Callable<BotList>() {
-          @Override
-          public BotList call() throws Exception {
-            return _selector.nextBotList();
-          }
-        }).get();
+        botList = _callbackPool.submit(() -> _selector.nextBotList()).get();
       }
       writer.append(COMMA_JOINER.join(botList.getBotNames()) + "\n");
       writer.flush();
@@ -196,13 +189,8 @@ public class BattleRunner {
       } while (!isBattleResult(input));
       final String result = input;
       _processQueue.add(battleProcess);
-      _callbackPool.submit(new Runnable() {
-        @Override
-        public void run() {
-          _listener.processResults(
-              getRobotScoreList(result), System.nanoTime() - startTime);
-        }
-      }).get();
+      _callbackPool.submit(() -> _listener.processResults(
+          getRobotScoreList(result), System.nanoTime() - startTime)).get();
       return result;
     }
   }

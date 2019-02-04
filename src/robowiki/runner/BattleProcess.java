@@ -6,6 +6,7 @@ import static robowiki.runner.RunnerUtil.parseStringArgument;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Map;
 import java.util.Set;
 
@@ -19,7 +20,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 
-public class BattleProcess {
+public final class BattleProcess {
   public static final String READY_SIGNAL = "BattleProcess ready";
   public static final String RESULT_SIGNAL = "BATTLE RESULT: ";
   public static final String BOT_DELIMITER = ":::";
@@ -28,10 +29,10 @@ public class BattleProcess {
   private static final Joiner COMMA_JOINER = Joiner.on(",");
   private static final Joiner COLON_JOINER = Joiner.on(BOT_DELIMITER);
 
-  private BattlefieldSpecification _battlefield;
-  private int _numRounds;
-  private RobocodeEngine _engine;
-  private BattleListener _listener;
+  private final BattlefieldSpecification _battlefield;
+  private final int _numRounds;
+  private final RobocodeEngine _engine;
+  private final BattleListener _listener;
 
   public static void main(String[] args) {
     args = getCombinedArgs(args);
@@ -48,7 +49,7 @@ public class BattleProcess {
         new BattleProcess(robocodePath, numRounds, width, height);
     System.out.println(READY_SIGNAL);
     BufferedReader stdin =
-        new BufferedReader(new java.io.InputStreamReader(System.in));
+        new BufferedReader(new InputStreamReader(System.in));
     while (true) {
       try {
         String line = stdin.readLine();
@@ -76,7 +77,7 @@ public class BattleProcess {
     _engine.setVisible(false);
   }
 
-  public String runBattle(BotList botList) {
+  public final String runBattle(BotList botList) {
     BattleSpecification battleSpec = new BattleSpecification(
         _numRounds, _battlefield, 
     _engine.getLocalRepository(COMMA_JOINER.join(botList.getBotNames())));

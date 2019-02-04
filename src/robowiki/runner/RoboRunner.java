@@ -38,7 +38,7 @@ public final class RoboRunner {
   private static final String ROBOCODE_PATHS_PROPERTY = "robocodePaths";
   private static final String JVM_ARGS_PROPERTY = "jvmArgs";
   private static final String BOTS_DIRS_PROPERTY = "botsDirs";
-  private static final String DEFAULT_JVM_ARGS = "-Xmx512M";
+  private static final String DEFAULT_JVM_ARGS = "-Xmx1024M -Dapple.awt.UIElement=true";
   private static final String DEFAULT_BOTS_DIRS = "./bots";
   private static final String SLASH = System.getProperty("file.separator");
   private static final double SMART_BATTLE_RANDOM_RATE = 0.1;

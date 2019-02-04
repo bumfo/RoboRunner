@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 echo "Clearing Robocode JARs, robot caches and databases... "
 cd robocodes
 rm -rf r*/robots/.data

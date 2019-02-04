@@ -24,3 +24,35 @@ sourceSets {
         }
     }
 }
+
+task cleanDist(dependsOn: build, type: Delete) {
+    delete["$buildDir/dist"]
+}
+
+task copyLibs(dependsOn: cleanDist, type: Copy) {
+    from "$buildDir/libs"
+    into "$buildDir/dist/lib"
+}
+
+task copyDependencies(type: Copy) {
+    from configurations.runtime
+    into "$buildDir/dist/lib"
+}
+
+task generateScripts(dependsOn: copyDependencies) {
+    String genOutputDir = file("$buildDir/generated-scripts")
+
+    File outputFile = file("$genOutputDir/rr.sh")
+    outputs.file(outputFile)
+
+    doLast {
+        outputFile.text = "#!/bin/sh\n" +
+                "java -cp lib/${jar.archivePath.getName()}:lib/guava-23.5-jre.jar:robocodes/r1/libs/robocode.jar robowiki.runner.RoboRunner \$*"
+    }
+}
+
+task deploy(dependsOn: copyLibs, type: Copy) {
+    from 'scripts'
+    from generateScripts.getOutputs()
+    into "$buildDir/dist"
+}

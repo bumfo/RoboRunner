@@ -171,7 +171,7 @@ public final class ScoreLog {
    * @return a new {@code ScoreLog} with the scores from the input file
    * @throws XMLStreamException    if the XML file is not in the expected format
    * @throws FileNotFoundException if the file doesn't exist
-   * @throws IOException
+   * @throws IOException           not specified
    */
   public static ScoreLog loadScoreLog(String inputFilePath)
     throws XMLStreamException, FileNotFoundException, IOException {

@@ -18,7 +18,6 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.XMLEvent;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Collection;
@@ -167,12 +166,10 @@ public final class ScoreLog {
    *
    * @param inputFilePath path of the XML data file
    * @return a new {@code ScoreLog} with the scores from the input file
-   * @throws XMLStreamException    if the XML file is not in the expected format
-   * @throws FileNotFoundException if the file doesn't exist
-   * @throws IOException
+   * @throws XMLStreamException if the XML file is not in the expected format
    */
   public static ScoreLog loadScoreLog(String inputFilePath)
-    throws XMLStreamException, FileNotFoundException, IOException {
+    throws XMLStreamException, IOException {
     ScoreLog scoreLog = null;
     List<RobotScore> robotScores = null;
     int numRounds = 0;

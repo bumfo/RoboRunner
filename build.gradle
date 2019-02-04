@@ -30,7 +30,7 @@ sourceSets {
 project.ext.distDir = "$buildDir/dist"
 
 task cleanDist(dependsOn: build, type: Delete) {
-    delete["$distDir"]
+    delete += "$distDir"
 }
 
 task copyDependencies(dependsOn: cleanDist, type: Copy) {

@@ -27,7 +27,7 @@ sourceSets {
     }
 }
 
-project.ext.distDir = "$buildDir/dist"
+def distDir = "$buildDir/dist"
 
 task cleanDist(type: Delete) {
     delete += "$distDir"
@@ -40,13 +40,19 @@ task copyDependencies(dependsOn: cleanDist, type: Copy) {
     into "$distDir/lib"
 }
 
-task copyLibs(dependsOn: copyDependencies, type: Copy) {
-    from "$buildDir/libs"
+task runnerJar(type: Jar, dependsOn: [compileJava]) {
+    from(compileJava.outputs)
+
+    archiveName jar.archiveName
+}
+
+task copyLibs(dependsOn: [runnerJar, copyDependencies], type: Copy) {
+    from(runnerJar.outputs)
     into "$distDir/lib"
 }
 
 
-task generateScripts(dependsOn: copyLibs) {
+task generateScripts(dependsOn: [copyLibs]) {
     String genOutputDir = file("$buildDir/generated-scripts")
 
     File outputFile = file("$genOutputDir/rr.sh")
@@ -61,7 +67,7 @@ task generateScripts(dependsOn: copyLibs) {
     }
 }
 
-task deploy(dependsOn: copyLibs, type: Copy) {
+task makeDist(dependsOn: copyLibs, type: Copy, group: 'deploy') {
     from('scripts') {
         include '*.sh'
         fileMode = 0755
@@ -75,4 +81,4 @@ task deploy(dependsOn: copyLibs, type: Copy) {
     into "$distDir"
 }
 
-classes.dependsOn(deploy)
+classes.dependsOn(makeDist)

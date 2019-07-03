@@ -51,7 +51,6 @@ task copyLibs(dependsOn: [runnerJar, copyDependencies], type: Copy) {
     into "$distDir/lib"
 }
 
-
 task generateScripts(dependsOn: [copyLibs]) {
     String genOutputDir = file("$buildDir/generated-scripts")
 
@@ -60,10 +59,12 @@ task generateScripts(dependsOn: [copyLibs]) {
 
     doLast {
         def libs = copyLibs.outputs.getFiles().singleFile
-        def path = fileTree(dir: libs).files.stream().map({ x -> 'lib' + x.toString().substring(libs.toString().length()) }).collect(Collectors.joining(':'))
+        def path = fileTree(dir: libs).files.stream().map({ x -> 'lib' + x.toString().substring(libs.toString().length()) }).collect(Collectors.joining(File.pathSeparator))
+
+        def robocodeJar = ['robocodes','r1','libs','robocode.jar'].join(File.separator)
 
         outputFile.text = "#!/bin/sh\n" +
-                "java -cp ${path}:robocodes/r1/libs/robocode.jar robowiki.runner.RoboRunner \$*"
+                "java -cp '${path}${File.pathSeparator}${robocodeJar}' robowiki.runner.RoboRunner \$*"
     }
 }
 

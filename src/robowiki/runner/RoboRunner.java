@@ -641,8 +641,9 @@ public final class RoboRunner {
           .getAverageBattleScore(botListString)
           .getRelativeTotalScore(scoreLog.challenger);
         ScoreError scoreError = errorMap.get(botListString);
+        double score = challenge.scoringStyle.getScore(totalRobotScore);
         System.out.println("  " + botListString + ": "
-          + round(challenge.scoringStyle.getScore(totalRobotScore), 2)
+          + (Double.isNaN(score) ? Double.NaN : round(score, 2))
           + (scoreError.numBattles > 1
           ? "  +- " + round(1.96 * scoreError.getStandardError(), 2) : "")
           + "  (" + scoreError.numBattles + " battles)");

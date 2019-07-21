@@ -430,9 +430,12 @@ public final class ScoreLog {
 
     public final RobotScore getRelativeTotalScore(String botName) {
       RobotScore referenceScore = getRobotScore(botName);
-      List<RobotScore> enemyScores = Lists.newArrayList(_robotScores);
-      enemyScores.remove(referenceScore);
-      return referenceScore.getScoreRelativeTo(enemyScores, _numRounds);
+      if (referenceScore != null) {
+        List<RobotScore> enemyScores = Lists.newArrayList(_robotScores);
+        enemyScores.remove(referenceScore);
+        return referenceScore.getScoreRelativeTo(enemyScores, _numRounds);
+      }
+      return null;
     }
   }
 }

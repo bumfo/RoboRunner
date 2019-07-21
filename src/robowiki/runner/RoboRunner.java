@@ -407,7 +407,9 @@ public final class RoboRunner {
     List<Double> scores = Lists.newArrayList();
     for (BattleScore battleScore : battleScores) {
       RobotScore totalScore = battleScore.getRelativeTotalScore(challenger);
-      scores.add(scoringStyle.getScore(totalScore));
+      if (totalScore != null) {
+        scores.add(scoringStyle.getScore(totalScore));
+      }
     }
     return new ScoreError(scores,
       scoreLog.getAverageBattleScore(botList).getElapsedTime());

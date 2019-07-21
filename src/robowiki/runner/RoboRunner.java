@@ -821,7 +821,7 @@ public final class RoboRunner {
     }
 
     public final double getTotalScore() {
-      return round(sumScores / scoredBotLists, 2);
+      return Double.isNaN(sumScores) ? Double.NaN : round(sumScores / scoredBotLists, 2);
     }
   }
 }

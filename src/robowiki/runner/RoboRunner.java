@@ -605,9 +605,14 @@ public final class RoboRunner {
         RobotScore totalRobotScore = scoreLog
           .getAverageBattleScore(botListString)
           .getRelativeTotalScore(scoreLog.challenger);
-        sumScores += scoringStyle.getScore(totalRobotScore);
-        scoredBotLists++;
-        numBattles += totalRobotScore.numBattles;
+        double score = scoringStyle.getScore(totalRobotScore);
+        if (!Double.isNaN(score)) {
+          sumScores += score;
+          scoredBotLists++;
+          numBattles += totalRobotScore.numBattles;
+        } else {
+          System.err.println("NaN: " + scoreLog.challenger + " " + botListString);
+        }
       }
     }
     return new ScoreSummary(sumScores, numBattles, scoredBotLists);

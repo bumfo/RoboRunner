@@ -728,10 +728,12 @@ public final class RoboRunner {
       errorMap.put(botList,
         getScoreError(scoreLog, scoringStyle, challenger, botList));
 
-      printBattleScore(challenger, botList, lastScore, avgScore,
-        scoringStyle, elapsedTime, errorMap);
-      if (robotScores.size() > 2) {
-        printMeleeScores(lastScore, avgScore, challenger, scoringStyle);
+      if (lastScore != null) {
+        printBattleScore(challenger, botList, lastScore, avgScore,
+          scoringStyle, elapsedTime, errorMap);
+        if (robotScores.size() > 2 && avgScore != null) {
+          printMeleeScores(lastScore, avgScore, challenger, scoringStyle);
+        }
       }
       printOverallScores(
         scoreLog, errorMap, challenger, challenge, printWikiFormat, false);
